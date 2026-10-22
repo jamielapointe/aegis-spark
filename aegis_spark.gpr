@@ -64,7 +64,7 @@ project Aegis_Spark is
    package Linker is
       case Aegis_Spark_Config.Alire_Host_OS is
          when "macos" =>
-            for Switches ("Ada") use ("-B/usr/bin");
+            for Switches ("Ada") use ("-B/Library/Developer/CommandLineTools/usr/bin");
          when others =>
             null;
       end case;
