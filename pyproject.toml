@@ -11,7 +11,7 @@ name = "Jamie LaPointe"
 
 [tool.pixi.dependencies]
 actionlint = ">=1.7.12,<2"
-clang = ">=21.1.8,<24"
+clang-23 = ">=23.1.0,<24"
 clang-tools = ">=21.1.8,<24"
 loguru = ">=0.7.3"
 mypy = ">=2.4.0"
