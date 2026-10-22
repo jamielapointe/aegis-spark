@@ -1,0 +1,7 @@
+title = "Aegis-SPARK Gitleaks Configuration"
+
+[allowlist]
+description = "Allow sanitized test fixtures and documentation examples"
+paths = [
+    '''tests/python/test_aegis_spark\.py''',
+]

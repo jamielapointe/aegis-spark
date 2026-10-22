@@ -1,0 +1,263 @@
+# =============================================================================
+# aegis-spark .gitignore (SPARK Ada 2022 + ISO C23 + Python 3.14.7)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Ada / SPARK / GNAT / GPRbuild / Alire Artifacts
+# -----------------------------------------------------------------------------
+# Alire local workspace state, host-specific binary lockfiles, and auto-config
+# Note: alire/alire.lock pins host-OS/arch binary tarballs (e.g., aarch64-darwin
+# vs x86_64-linux vs aarch64-linux), so it MUST be ignored across multi-OS hosts.
+/alire/
+alire/
+/alire_install/
+alire_install/
+/config/
+config/
+
+# GPRbuild output directories
+/obj/
+obj/
+/bin/
+bin/
+/lib/
+lib/
+/share/
+share/
+
+# GNATprove formal verification outputs & Why3 session caches
+gnatprove/
+**/gnatprove/
+*.spark
+gnatprove.out
+why3session.xml
+why3shapes.*
+*.mlw
+*.vcg
+
+# GNAT compiler, binder, and callgraph intermediate artifacts
+*.ali
+*.adt
+*.ci
+*.cswi
+*.bexch
+*.lexch
+*.deps
+b__*.ads
+b__*.adb
+b__*.o
+b__*.ali
+b~*.ads
+b~*.adb
+b~*.o
+b~*.ali
+
+# Ada Language Server (ALS), GPRbuild, and GNAT Studio caches
+.als/
+.gpr_cache/
+.gps/
+auto.cgpr
+default.cgpr
+*.cgpr
+
+# -----------------------------------------------------------------------------
+# 2. Package Managers & Virtual Environments (Pixi / Python)
+# -----------------------------------------------------------------------------
+# Pixi environments & workspace directories
+.pixi/
+**/.pixi/
+!.pixi/config.toml
+
+# Standard Python virtual environments & local env files
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.env
+.env.*
+.envrc
+.python-version
+
+# Legacy / alternative lockfiles (Pixi uses pixi.lock)
+uv.lock
+node_modules/
+
+# -----------------------------------------------------------------------------
+# 3. C23 / Clang / GCC / Linker / Sanitizer Artifacts
+# -----------------------------------------------------------------------------
+# Out-of-source build directories
+build/
+Build/
+build-*/
+out/
+
+# Compilation database and CMake caches (if generated for clangd/IDE)
+compile_commands.json
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CMakeUserPresets.json
+_deps/
+.ninja_deps
+.ninja_log
+build.ninja
+*.ninja
+
+# Object files and dependency files
+*.o
+*.obj
+*.lo
+*.slo
+*.d
+
+# Compiled shared/static libraries and executables
+*.so
+*.so.*
+*.dylib
+*.dll
+*.lai
+*.la
+*.a
+*.lib
+*.exe
+*.out
+*.app
+
+# Precompiled headers, debug symbols (macOS dSYM), and coverage/profiling data
+*.gch
+*.pch
+*.pdb
+*.dwo
+*.ilk
+*.dSYM/
+*.gcda
+*.gcno
+*.gcov
+*.profraw
+*.profdata
+
+# Compiler & static analyzer caches
+.cache/
+.ccache/
+
+# -----------------------------------------------------------------------------
+# 4. Python Packaging, Bytecode & Testing Caches
+# -----------------------------------------------------------------------------
+# Byte-compiled / optimized files
+__pycache__/
+*.py[codz]
+*$py.class
+
+# Distribution and packaging
+dist/
+develop-eggs/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Unit test, Hypothesis property test, and coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+nosetests.xml
+*.cover
+*.py.cover
+.hypothesis/
+.pytest_cache/
+.benchmarks/
+cover/
+.tox/
+.nox/
+
+# Type checking, linting, and markdown linter caches
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.rumdl_cache/
+.rumdl/
+
+# -----------------------------------------------------------------------------
+# 5. Jupyter & Marimo Notebook Caches
+# -----------------------------------------------------------------------------
+.ipynb_checkpoints/
+profile_default/
+ipython_config.py
+marimo/_static/
+marimo/_lsp/
+__marimo__/
+
+# -----------------------------------------------------------------------------
+# 6. Logging, Telemetry & Temporary Results
+# -----------------------------------------------------------------------------
+logs/
+*.log
+*.rrd
+*.mcap
+scratch/
+
+# -----------------------------------------------------------------------------
+# 7. Secrets, Credentials & Sensitive Data
+# -----------------------------------------------------------------------------
+secrets.toml
+.secrets/
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+*pii*.csv
+*pii*.json
+*PII*.csv
+*PII*.json
+
+# -----------------------------------------------------------------------------
+# 8. Agent Orchestration & Teamwork Metadata
+# -----------------------------------------------------------------------------
+.agents/
+.agents/**
+AGENT.md
+GEMINI.md
+
+# -----------------------------------------------------------------------------
+# 9. Editor & Operating System Artifacts
+# -----------------------------------------------------------------------------
+# Editor directories
+.vscode/
+*.code-workspace
+.idea/
+.spyderproject
+.spyproject
+.ropeproject
+
+# Temporary / editor backup files
+*.tmp
+*.bak
+*.swp
+*~
+.*~
+# Deletion safety guard: prevent accidental commit of literal tilde paths
+~
+~/
+
+# Operating system files (macOS & Linux)
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

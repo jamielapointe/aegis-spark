@@ -1,0 +1,93 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-hygiene:
+    name: Lint, Hygiene & C23 Clang-Tidy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@9dabb60412d3d2d967a8d682f7ce01317af40514 # v0.11.0
+        with:
+          pixi-version: v0.81.0
+          cache: true
+
+      - name: Run repository hygiene & SPARK contract checks
+        run: |
+          pixi run check-hygiene
+          pixi run verify-spark
+          pixi run sort-pyproject-toml
+
+      - name: Run Python linters, Markdown linter, & workflow security checks
+        run: |
+          pixi run lint
+          pixi run format-check
+          pixi run typecheck
+          pixi run rumdl check .
+          pixi run actionlint .github/workflows/ci.yml
+          pixi run zizmor .github/workflows/ci.yml
+
+      - name: Run C23 clang-format & clang-tidy static analysis
+        run: |
+          pixi run clang-format-check
+          pixi run clang-tidy
+
+  spark-prove-and-test:
+    name: SPARK Gold Proof & Verification (${{ matrix.os }})
+    needs: lint-and-hygiene
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Alire (alr)
+        uses: alire-project/setup-alire@fc4c8ce471aa30b3af0d39ce15add1ee9eaf28f2 # v6.0.0
+        with:
+          version: "2.1.1"
+          toolchain: "gnat_native gprbuild"
+
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@9dabb60412d3d2d967a8d682f7ce01317af40514 # v0.11.0
+        with:
+          pixi-version: v0.81.0
+          cache: true
+
+      - name: Run Gold-level SPARK formal verification (gnatprove)
+        run: pixi run prove-ci
+
+      - name: Build validation binary & execute Python/SPARK test suite
+        run: |
+          pixi run test-ada
+          pixi run test-python

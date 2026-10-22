@@ -1,0 +1,19 @@
+--  Global Configuration Pragmas for High-Integrity SPARK Ada 2022 Systems
+pragma Ada_2022;
+pragma SPARK_Mode (On);
+
+--  Enforce deterministic tasking and sequential package elaboration
+pragma Profile (Jorvik);
+pragma Partition_Elaboration_Policy (Sequential);
+
+--  Enforce zero dynamic allocation and bounded stack/WCET on real-time paths
+pragma Restrictions (No_Allocators);
+pragma Restrictions (No_Implicit_Heap_Allocations);
+pragma Restrictions (No_Secondary_Stack);
+pragma Restrictions (No_Recursion);
+pragma Restrictions (No_Access_Subprograms);
+pragma Restrictions (No_Unchecked_Deallocation);
+
+--  Enable contract & ghost checking during verification and validation builds
+pragma Assertion_Policy (Check);
+pragma Overflow_Mode (General => Strict, Assertions => Eliminated);

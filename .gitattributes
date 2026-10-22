@@ -1,0 +1,17 @@
+# =============================================================================
+# aegis-spark .gitattributes
+# =============================================================================
+
+# Normalize line endings to LF across all operating systems
+* text=auto eol=lf
+
+# Treat lockfiles as binary/generated to prevent noisy diffs and 3-way merge conflicts
+pixi.lock merge=binary linguist-language=YAML linguist-generated=true -diff
+
+# GitHub Linguist language classification for SPARK Ada 2022 and ISO C23 sources
+*.ads linguist-language=Ada
+*.adb linguist-language=Ada
+*.gpr linguist-language=Ada
+*.adc linguist-language=Ada
+*.c linguist-language=C
+*.h linguist-language=C
