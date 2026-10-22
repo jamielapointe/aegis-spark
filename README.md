@@ -60,6 +60,7 @@ aegis-spark/
 ├── aegis_spark.gpr             # GPRbuild multi-language (Ada 2022 + C23) project file
 ├── gnat.adc                    # High-integrity SPARK/Jorvik restriction pragmas
 ├── pyproject.toml              # Unified Pixi, Ruff, Mypy, Pytest, Coverage & Rumdl config
+├── .clangd                     # clangd C23 language server configuration (synced with GPR)
 ├── .clang-format               # Google C/C++ formatting configuration
 ├── .clang-tidy                 # CERT C / MISRA C / Real-Time static analysis configuration
 ├── .pre-commit-config.yaml     # Multi-language pre-commit hooks

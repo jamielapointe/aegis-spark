@@ -212,6 +212,7 @@ def check_directory_layout(root: Path) -> list[str]:
         root / 'aegis_spark.gpr',
         root / 'gnat.adc',
         root / 'pyproject.toml',
+        root / '.clangd',
         root / '.clang-format',
         root / '.clang-tidy',
         root / '.pre-commit-config.yaml',

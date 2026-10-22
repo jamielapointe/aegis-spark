@@ -33,6 +33,9 @@ and command interceptor following the **NVIDIA Halos** / **IGX Thor Functional S
 - **ISO C23 (`/c-pro`)**:
   - Enforce `-std=c23 -Wall -Wextra -Wpedantic -Werror` and `.clang-tidy` (`WarningsAsErrors: "*"`) with Google
     formatting (`.clang-format`).
+  - Keep `.clangd` and the auto-generated `compile_commands.json` (produced by `scripts/ci/run_clang_tidy.py` directly
+    from `aegis_spark.gpr`) 100% synchronized with `for Default_Switches ("C")` and `for Source_Dirs` in
+    `aegis_spark.gpr`.
 - **Python 3.14.7 (`/python-pro`)**:
   - Use native PEP 649 deferred annotations (never `from __future__ import annotations`).
   - Follow Google Python Style Guide (`ruff` with single quotes and `convention = "google"`, `mypy --strict`).
