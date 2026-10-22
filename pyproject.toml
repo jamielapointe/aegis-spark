@@ -1,0 +1,340 @@
+[project]
+description = "Formally verified SPARK Ada 2022 and ISO C23 robotics safety kernel (NVIDIA Halos pattern)"
+name = "aegis-spark"
+readme = "README.md"
+requires-python = ">=3.14.7,<3.15"
+version = "0.1.0"
+
+[[project.authors]]
+email = "jamielapointe@google.com"
+name = "Jamie LaPointe"
+
+[tool.pixi.dependencies]
+actionlint = ">=1.7.12,<2"
+clang-23 = ">=23.1.0,<24"
+clang-tools = ">=21.1.8,<24"
+loguru = ">=0.7.3"
+mypy = ">=2.4.0"
+pre-commit = ">=4.6.0"
+pydantic = ">=2.13.0"
+pytest = ">=9.1.0"
+pytest-benchmark = ">=5.3.0"
+pytest-cov = ">=6.0.0"
+pytest-timeout = ">=2.3.0"
+python = ">=3.14.7,<3.15"
+rich = ">=15.0.0"
+ruff = ">=0.16.0"
+zizmor = ">=1.30.1,<2"
+
+[tool.pixi.pypi-dependencies]
+rumdl = ">=0.2.78"
+
+[tool.pixi.tasks]
+build = "alr --non-interactive build --validation"
+build-release = "alr --non-interactive build --release"
+check-hygiene = "python scripts/ci/agent_ci_hygiene.py"
+clang-format = "python scripts/ci/run_clang_format.py"
+clang-format-check = "python scripts/ci/run_clang_format.py --check"
+clang-tidy = "python scripts/ci/run_clang_tidy.py"
+clean = "alr --non-interactive clean && alr --non-interactive gnatprove --clean"
+format = "ruff format"
+format-check = "ruff format --check"
+lint = "ruff check"
+lint-fix = "ruff check --fix --exit-non-zero-on-fix"
+pre-commit = "pre-commit run --all-files"
+prove = "alr --non-interactive build --stop-after=generation && alr --non-interactive gnatprove --level=2 -j0"
+prove-ci = "alr --non-interactive build --stop-after=generation && alr --non-interactive gnatprove --level=4 --prover=cvc5,z3,altergo --warnings=error --report=all -j0"
+reorder-pyproject = "python scripts/ci/reorder_pyproject.py pyproject.toml"
+run = "./bin/aegis_spark"
+sort-pyproject-toml = "python scripts/ci/reorder_pyproject.py --check pyproject.toml"
+test-ada = "alr --non-interactive build --validation && ./bin/aegis_spark"
+test-python = "pytest tests/python -v"
+typecheck = "mypy"
+verify-spark = "python scripts/ci/verify_spark_contracts.py"
+
+[tool.pixi.tasks.ci]
+depends-on = [
+    "check-hygiene",
+    "clang-format-check",
+    "clang-tidy",
+    "format-check",
+    "lint",
+    "prove-ci",
+    "sort-pyproject-toml",
+    "test-ada",
+    "test-python",
+    "typecheck",
+    "verify-spark",
+]
+
+[tool.pixi.tasks.test]
+depends-on = [
+    "prove",
+    "test-ada",
+    "test-python",
+    "verify-spark",
+]
+
+[tool.pixi.workspace]
+channels = [
+    "conda-forge",
+]
+platforms = [
+    "linux-64",
+    "linux-aarch64",
+    "osx-arm64",
+]
+
+[tool.ruff]
+exclude = [
+    ".agents",
+    ".benchmarks",
+    ".git",
+    ".pixi",
+    ".venv",
+    "alire",
+    "alire_install",
+    "bin",
+    "build",
+    "config",
+    "dist",
+    "obj",
+]
+line-length = 120
+preview = true
+target-version = "py314"
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "single"
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint]
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+fixable = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "I",
+    "N",
+    "RUF",
+    "UP",
+    "W",
+]
+ignore = [
+    "raise-vanilla-args",
+]
+select = [
+    "ANN",
+    "ARG",
+    "B",
+    "BLE",
+    "C4",
+    "D",
+    "DOC",
+    "E",
+    "F",
+    "G",
+    "I",
+    "LOG",
+    "N",
+    "PERF",
+    "PL",
+    "PT",
+    "PTH",
+    "PYI",
+    "RET",
+    "RUF",
+    "S",
+    "SIM",
+    "T20",
+    "TC",
+    "TID",
+    "TRY",
+    "UP",
+    "W",
+]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api."__future__.annotations"]
+msg = "Use native PEP 649 deferred annotations in Python 3.14.7+ instead of obsolete '__future__.annotations'."
+
+[tool.ruff.lint.flake8-type-checking]
+exempt-modules = [
+    "collections.abc",
+    "loguru",
+    "pathlib",
+    "types",
+    "typing",
+]
+runtime-evaluated-base-classes = [
+    "pydantic.BaseModel",
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+lines-after-imports = 2
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/**" = [
+    "TC",
+    "print",
+    "start-process-with-partial-path",
+    "subprocess-without-shell-equals-true",
+]
+"tests/**" = [
+    "TC",
+    "assert",
+    "import-outside-top-level",
+    "magic-value-comparison",
+    "start-process-with-partial-path",
+    "subprocess-without-shell-equals-true",
+]
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 120
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.pylint]
+allow-magic-value-types = [
+    "bytes",
+    "int",
+    "str",
+]
+max-args = 8
+max-branches = 15
+max-locals = 20
+max-positional-args = 5
+max-public-methods = 25
+max-returns = 6
+max-statements = 60
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_calls = false
+disallow_untyped_defs = true
+enable_error_code = [
+    "ignore-without-code",
+]
+files = [
+    "scripts",
+    "tests/python",
+]
+follow_imports = "normal"
+ignore_missing_imports = false
+no_implicit_optional = true
+plugins = [
+    "pydantic.mypy",
+]
+pretty = true
+python_version = "3.14"
+show_error_codes = true
+show_error_context = true
+show_traceback = true
+strict = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+check_untyped_defs = true
+disallow_untyped_calls = false
+disallow_untyped_defs = false
+module = [
+    "tests.*",
+]
+warn_return_any = false
+warn_unused_ignores = false
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+    "--strict-config",
+    "--strict-markers",
+    "-ra",
+]
+filterwarnings = [
+    "error",
+]
+markers = [
+    "benchmark: performance and latency benchmarks",
+    "integration: multi-component SPARK + C23 + Python integration tests",
+    "unit: fast isolated unit tests",
+]
+minversion = "9.1.0"
+python_files = [
+    "*_test.py",
+    "test_*.py",
+]
+pythonpath = [
+    ".",
+    "scripts",
+]
+testpaths = [
+    "tests/python",
+]
+timeout = 120
+timeout_method = "thread"
+xfail_strict = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "def __repr__",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
+show_missing = true
+
+[tool.coverage.run]
+branch = true
+omit = [
+    "*/.agents/*",
+    "*/tests/*",
+]
+source = [
+    "scripts",
+]
+
+[tool.rumdl]
+exclude = [
+    ".agents",
+    ".benchmarks",
+    ".git",
+    ".github",
+    ".pixi",
+    ".venv",
+    "alire",
+    "alire_install",
+    "bin",
+    "build",
+    "config",
+    "dist",
+    "obj",
+]
+flavor = "gfm"
+line-length = 120
+respect-gitignore = true
+
+[tool.rumdl.MD013]
+code-blocks = false
+code-spans = false
+headings = false
+line-length = 120
+math-blocks = false
+reflow = true
+reflow-mode = "normalize"
+strict = false
+tables = false
+
+[tool.rumdl.MD033]
+allowed-elements = [
+    "br",
+]

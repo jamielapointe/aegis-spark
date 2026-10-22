@@ -1,0 +1,22 @@
+name = "aegis_spark"
+description = "Formally verified SPARK Ada 2022 & C23 safety kernel (Halos pattern)"
+version = "0.1.0-dev"
+
+authors = ["Jamie LaPointe"]
+maintainers = ["Jamie LaPointe <jamielapointe@google.com>"]
+maintainers-logins = ["jamielapointe"]
+licenses = "MIT OR Apache-2.0 WITH LLVM-exception"
+website = "https://github.com/jamielapointe/aegis-spark"
+tags = ["ada", "spark", "c23", "robotics", "safety", "halos"]
+
+executables = ["aegis_spark"]
+
+[build-profiles]
+"*" = "validation"
+
+[[depends-on]]
+gnatprove = "^16.1.0"
+
+[[actions]]
+type = "post-build"
+command = ["python3", "scripts/ci/run_clang_tidy.py"]

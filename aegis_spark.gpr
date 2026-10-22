@@ -1,0 +1,88 @@
+with "config/aegis_spark_config.gpr";
+project Aegis_Spark is
+
+   for Languages use ("Ada", "C");
+   for Source_Dirs use ("src/", "config/");
+   for Object_Dir use "obj/" & Aegis_Spark_Config.Build_Profile;
+   for Create_Missing_Dirs use "True";
+   for Exec_Dir use "bin";
+   for Main use ("aegis_spark.adb");
+
+   package Builder is
+      for Global_Configuration_Pragmas use "gnat.adc";
+   end Builder;
+
+   package Compiler is
+      for Default_Switches ("Ada") use
+        Aegis_Spark_Config.Ada_Compiler_Switches &
+        ("-gnat2022",
+         "-gnatW8",
+         "-gnatwa",
+         "-gnatwe",
+         "-gnatw.X",
+         "-gnatVa",
+         "-gnata",
+         "-gnaty3aAbBcefhiIklnOprStux",
+         "-gnaty-d",
+         "-gnatyM100",
+         "-fcallgraph-info=su,da");
+
+      for Default_Switches ("C") use
+        ("-std=c23",
+         "-O3",
+         "-g",
+         "-Wall",
+         "-Wextra",
+         "-Wpedantic",
+         "-Werror",
+         "-Wstrict-prototypes",
+         "-Wmissing-prototypes",
+         "-Wmissing-declarations",
+         "-Wold-style-definition",
+         "-Wbad-function-cast",
+         "-Wconversion",
+         "-Wsign-conversion",
+         "-Wdouble-promotion",
+         "-Wcast-qual",
+         "-Wcast-align",
+         "-Wwrite-strings",
+         "-Wformat=2",
+         "-Wformat-security",
+         "-Wnull-dereference",
+         "-Wshadow",
+         "-Wimplicit-fallthrough",
+         "-Wvla",
+         "-Wundef",
+         "-Wswitch-enum",
+         "-ftrivial-auto-var-init=zero");
+   end Compiler;
+
+   package Binder is
+      for Switches ("Ada") use ("-Es"); --  Symbolic traceback
+   end Binder;
+
+   package Linker is
+      case Aegis_Spark_Config.Alire_Host_OS is
+         when "macos" =>
+            for Switches ("Ada") use ("-B/Library/Developer/CommandLineTools/usr/bin");
+         when others =>
+            null;
+      end case;
+   end Linker;
+
+   package Prove is
+      for Proof_Switches ("Ada") use
+        ("--mode=all",
+         "--level=2",
+         "--prover=cvc5,z3,altergo",
+         "--warnings=error",
+         "--report=all",
+         "-j0");
+   end Prove;
+
+   package Format is
+      for Width ("Ada") use "100";
+      for Indentation ("Ada") use "3";
+   end Format;
+
+end Aegis_Spark;
