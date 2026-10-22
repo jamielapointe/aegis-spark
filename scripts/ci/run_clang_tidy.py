@@ -11,6 +11,7 @@ pre-commit hooks, and GitHub Actions CI.
 import argparse
 import importlib
 import os
+import platform
 import shutil
 import sys
 from pathlib import Path
@@ -57,7 +58,7 @@ def get_macos_sdk_path() -> str | None:
     Returns:
         The SDK path string on macOS if available, otherwise None.
     """
-    if sys.platform != 'darwin':
+    if platform.system() != 'Darwin':
         return None
     xcrun_bin = shutil.which('xcrun') or '/usr/bin/xcrun'
     if not Path(xcrun_bin).is_file():
