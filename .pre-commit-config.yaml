@@ -44,7 +44,7 @@ repos:
         name: clang-tidy C23 static analysis (pixi)
         entry: pixi run clang-tidy
         language: system
-        files: '^src/.*\.(c|h)$|\.clang-tidy$'
+        files: '^src/.*\.(c|h)$|^\.clang-tidy$|^\.clangd$|^aegis_spark\.gpr$'
         pass_filenames: false
         require_serial: true
 

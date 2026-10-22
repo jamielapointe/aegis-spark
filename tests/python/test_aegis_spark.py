@@ -36,6 +36,30 @@ def test_clang_format_and_tidy_pass() -> None:
     assert run_clang_tidy.main(['--root', str(REPO_ROOT)]) == 0
 
 
+@pytest.mark.unit
+def test_compile_commands_and_clangd_match_gpr() -> None:
+    """Verify that compile_commands.json and .clangd match aegis_spark.gpr C23 settings."""
+    source_dirs, c_switches, _ = run_clang_tidy.extract_gpr_c_config(REPO_ROOT)
+    assert '-std=c23' in c_switches
+    assert '-ftrivial-auto-var-init=zero' in c_switches
+    assert run_clang_tidy.verify_clangd_config_sync(REPO_ROOT, c_switches) == []
+
+    assert run_clang_tidy.main(['--root', str(REPO_ROOT)]) == 0
+    cdb_path = REPO_ROOT / 'compile_commands.json'
+    assert cdb_path.is_file()
+
+    import json
+
+    entries = json.loads(cdb_path.read_text(encoding='utf-8'))
+    assert len(entries) >= 1
+    args = entries[0]['arguments']
+    for sw in c_switches:
+        assert sw in args, f'Missing GPR C switch {sw} in compile_commands.json'
+    for rel_dir in source_dirs:
+        expected_inc = f'-I{(REPO_ROOT / rel_dir).resolve()}'
+        assert expected_inc in args, f'Missing include flag {expected_inc} in compile_commands.json'
+
+
 @pytest.mark.integration
 def test_aegis_spark_binary_execution() -> None:
     """Verify that the compiled aegis_spark binary executes and enforces Gold safety invariants."""

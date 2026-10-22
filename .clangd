@@ -1,0 +1,37 @@
+# =============================================================================
+# aegis-spark .clangd — Synchronized with aegis_spark.gpr Default_Switches("C")
+# =============================================================================
+CompileFlags:
+  Add:
+    - -xc
+    - -std=c23
+    - -O3
+    - -g
+    - -Wall
+    - -Wextra
+    - -Wpedantic
+    - -Werror
+    - -Wstrict-prototypes
+    - -Wmissing-prototypes
+    - -Wmissing-declarations
+    - -Wold-style-definition
+    - -Wbad-function-cast
+    - -Wconversion
+    - -Wsign-conversion
+    - -Wdouble-promotion
+    - -Wcast-qual
+    - -Wcast-align
+    - -Wwrite-strings
+    - -Wformat=2
+    - -Wformat-security
+    - -Wnull-dereference
+    - -Wshadow
+    - -Wimplicit-fallthrough
+    - -Wvla
+    - -Wundef
+    - -Wswitch-enum
+    - -ftrivial-auto-var-init=zero
+  Remove:
+    - -xobjective-c++-header
+    - -xobjective-c++
+    - -specs=*
