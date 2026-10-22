@@ -61,6 +61,15 @@ project Aegis_Spark is
       for Switches ("Ada") use ("-Es"); --  Symbolic traceback
    end Binder;
 
+   package Linker is
+      case Aegis_Spark_Config.Alire_Host_OS is
+         when "macos" =>
+            for Switches ("Ada") use ("-B/usr/bin");
+         when others =>
+            null;
+      end case;
+   end Linker;
+
    package Prove is
       for Proof_Switches ("Ada") use
         ("--mode=all",
