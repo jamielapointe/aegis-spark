@@ -30,6 +30,22 @@ def test_spark_contracts_hygiene_passes() -> None:
 
 
 @pytest.mark.unit
+def test_uart0_mmio_proof_of_concept_sources() -> None:
+    """Verify that the SPARK Ada 2022 UART0 MMIO register proof-of-concept is present and well-formed."""
+    ads_path = REPO_ROOT / 'src' / 'uart0_mmio.ads'
+    adb_path = REPO_ROOT / 'src' / 'uart0_mmio.adb'
+    assert ads_path.is_file()
+    assert adb_path.is_file()
+
+    ads_content = ads_path.read_text(encoding='utf-8')
+    assert '16#4000_1000#' in ads_content
+    assert 'Async_Writers' in ads_content
+    assert 'Async_Readers' in ads_content
+    assert 'Effective_Writes' in ads_content
+    assert 'To_Address' in ads_content
+
+
+@pytest.mark.unit
 def test_clang_format_and_tidy_pass() -> None:
     """Verify that C23 sources pass both clang-format and clang-tidy."""
     assert run_clang_format.main(['--root', str(REPO_ROOT), '--check']) == 0

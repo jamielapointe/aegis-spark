@@ -3,6 +3,7 @@ with Halos_Logger;      use Halos_Logger;
 with Halos_Safety_Gate; use Halos_Safety_Gate;
 with Interfaces;        use Interfaces;
 with Interfaces.C;      use Interfaces.C;
+with Uart0_Mmio;
 
 procedure Aegis_Spark
    with SPARK_Mode => On
@@ -22,6 +23,15 @@ is
    Safe_Out : Safe_Torque_Array;
    Status   : Halos_Status;
 begin
+   --  Verify UART0 MMIO 32-bit register layouts (Uart0_Mmio proof-of-concept).
+   --  Note: Uart0_Mmio.Uart0_Init and Uart0_Mmio.Uart0_Putc map physical address
+   --  16#4000_1000# and cannot be invoked at runtime on a host OS without hardware
+   --  simulation/emulation (e.g., QEMU or Renode).
+   pragma Assert
+     (Uart0_Mmio.Uart_Data_Reg'Size = 32
+      and then Uart0_Mmio.Uart_Status_Reg'Size = 32
+      and then Uart0_Mmio.Uart_Ctrl_Reg'Size = 32);
+
    Log_Suite_Header;
 
    --  1. Nominal command within watchdog deadline and torque envelope

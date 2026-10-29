@@ -18,6 +18,13 @@ and verification orchestration.
     strict CERT C / MISRA C static analysis (`clang-tidy`).
   - Automatically runs `clang-tidy` on every `alr build` via Alire's `post-build` action hook
     (`scripts/ci/run_clang_tidy.py`), as well as via `pixi` tasks and `pre-commit`.
+- **SPARK Ada 2022 MMIO Hardware Register Proof-of-Concept (`src/uart0_mmio.ads`, `src/uart0_mmio.adb`)**:
+  - Demonstrates safe Memory-Mapped I/O (MMIO) register access at fixed peripheral addresses (`16#4000_1000#`) using
+    record representation clauses (`Size => 32`), `Volatile` / `Import` overlays, fine-grained SPARK volatility aspects
+    (`Async_Writers`, `Async_Readers`, `Effective_Reads`, `Effective_Writes`), and bounded polling
+    (`Always_Terminates`).
+  - Compiled by `gprbuild` and formally proven by `gnatprove` (`--level=4`); runtime execution of MMIO reads/writes
+    requires bare-metal silicon or hardware simulation/emulation (e.g., QEMU or Renode).
 - **Cross-Platform Multi-Language Workflow (`pyproject.toml`, `alire.toml`, `aegis_spark.gpr`)**:
   - Portable across **Apple macOS (`osx-arm64`)**, **Ubuntu Linux (`x86_64`)**,
     **Embedded Linux (`aarch64` / Raspberry Pi 5)**, and **RISC-V (`riscv64` RVA23)**.
