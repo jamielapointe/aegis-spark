@@ -1,8 +1,8 @@
 #include "halos_mailbox.h"
 
 #include <stdatomic.h>
+#include <stddef.h>
 #include <stdint.h>
-#include <string.h>
 
 // Static Host SIL simulation channel instance (64-byte cache line aligned)
 // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
@@ -41,16 +41,41 @@ enum halos_mailbox_status aegis_mailbox_init(struct aegis_mailbox_channel* chan,
     return HALOS_MBX_ERR_UNALIGNED;
   }
 
-  memset(chan, 0, sizeof(struct aegis_mailbox_channel));
-
-  chan->config.magic = AEGIS_MAILBOX_MAGIC;
-  chan->config.version = AEGIS_MAILBOX_VERSION;
-  chan->config.capacity = AEGIS_MAILBOX_CAPACITY;
-  chan->config.slot_size = AEGIS_MAILBOX_SLOT_SIZE;
-  chan->config.channel_id = channel_id;
+  chan->config = (struct aegis_mailbox_config){
+      .magic = AEGIS_MAILBOX_MAGIC,
+      .version = AEGIS_MAILBOX_VERSION,
+      .capacity = AEGIS_MAILBOX_CAPACITY,
+      .slot_size = AEGIS_MAILBOX_SLOT_SIZE,
+      .channel_id = channel_id,
+  };
+  for (size_t i = 0U; i < 40U; ++i) {
+    chan->config.reserved[i] = 0U;
+  }
 
   atomic_init(&chan->producer.tail, 0U);
+  chan->producer.cached_head = 0U;
+  chan->producer.push_count = 0U;
+  chan->producer.full_drops = 0U;
+  for (size_t i = 0U; i < 32U; ++i) {
+    chan->producer.reserved[i] = 0U;
+  }
+
   atomic_init(&chan->consumer.head, 0U);
+  chan->consumer.cached_tail = 0U;
+  chan->consumer.pop_count = 0U;
+  chan->consumer.crc_errors = 0U;
+  chan->consumer.seq_gaps = 0U;
+  for (size_t i = 0U; i < 24U; ++i) {
+    chan->consumer.reserved[i] = 0U;
+  }
+
+  for (size_t i = 0U; i < 64U; ++i) {
+    chan->reserved_line[i] = 0U;
+  }
+
+  for (size_t i = 0U; i < AEGIS_MAILBOX_CAPACITY; ++i) {
+    chan->slots[i] = (struct halos_mailbox_msg){0};
+  }
 
   return HALOS_MBX_OK;
 }
