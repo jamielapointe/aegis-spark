@@ -64,7 +64,7 @@ sort-pyproject-toml = "python scripts/ci/reorder_pyproject.py --check pyproject.
 test-ada = "alr --non-interactive build --validation && ./bin/aegis_spark"
 test-aunit = "alr --non-interactive exec -- gprbuild -P tests/aunit/aegis_spark_tests.gpr -XAEGIS_TARGET_MODE=host_sim && ./bin/aunit_runner"
 test-gtest = "cmake --build --preset host-sim-debug --target aegis_spark_gtest && ctest --preset host-sim-debug -R gtest_suite --output-on-failure"
-test-gtest-asan = "cmake --build --preset host-sim-asan --target aegis_spark_gtest && ctest --preset host-sim-asan -R gtest_suite --output-on-failure"
+test-gtest-asan = "cmake --workflow --preset host-sim-asan"
 test-hypothesis = "pytest tests/python/test_hypothesis_fuzz.py -v"
 test-python = "pytest tests/python -v"
 test-python-fuzz = "pytest tests/python/test_hypothesis_fuzz.py -v"
