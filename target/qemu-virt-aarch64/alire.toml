@@ -1,0 +1,13 @@
+name = "aegis_spark_qemu"
+description = "Bare-metal ARM64 QEMU target for Aegis-SPARK"
+version = "0.1.0-dev"
+
+authors = ["Jamie LaPointe"]
+maintainers = ["Jamie LaPointe <jamie.lapointe@gmail.com>"]
+maintainers-logins = ["jamielapointe"]
+licenses = "Apache-2.0"
+
+executables = ["aegis_spark_qemu"]
+
+[[depends-on]]
+gnat_aarch64_elf = "16.1.0"

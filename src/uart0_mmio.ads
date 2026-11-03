@@ -23,6 +23,7 @@ is
    --  Hardware register overlays re-exported from scenario HAL
    DR_Reg   : Uart_Data_Reg   renames Aegis.HAL.Registers.DR_Reg;
    SR_Reg   : Uart_Status_Reg renames Aegis.HAL.Registers.SR_Reg;
+   FR_Reg   : Uart_Status_Reg renames Aegis.HAL.Registers.FR_Reg;
    CR_Reg   : Uart_Ctrl_Reg   renames Aegis.HAL.Registers.CR_Reg;
    BAUD_Reg : Unsigned_32     renames Aegis.HAL.Registers.BAUD_Reg;
 
@@ -47,6 +48,16 @@ is
                       In_Out => DR_Reg),
           Depends => (Timed_Out => SR_Reg,
                       DR_Reg    => (DR_Reg, SR_Reg, Byte)),
+          Always_Terminates;
+
+   --  Safe bounded string transmission with SPARK termination contract
+   procedure Uart0_Puts
+     (Str       :     String;
+      Timed_Out : out Boolean)
+     with Global  => (Input  => SR_Reg,
+                      In_Out => DR_Reg),
+          Depends => (Timed_Out => (SR_Reg, Str),
+                      DR_Reg    => (DR_Reg, SR_Reg, Str)),
           Always_Terminates;
 
 end Uart0_Mmio;

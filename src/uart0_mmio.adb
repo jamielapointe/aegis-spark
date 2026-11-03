@@ -50,4 +50,21 @@ is
       Timed_Out := True;
    end Uart0_Putc;
 
+   procedure Uart0_Puts
+     (Str       :     String;
+      Timed_Out : out Boolean)
+   is
+      Char_Timed_Out : Boolean;
+   begin
+      Timed_Out := False;
+      for Idx in Str'Range loop
+         Uart0_Putc (Byte      => Character'Pos (Str (Idx)),
+                     Timed_Out => Char_Timed_Out);
+         if Char_Timed_Out then
+            Timed_Out := True;
+            return;
+         end if;
+      end loop;
+   end Uart0_Puts;
+
 end Uart0_Mmio;

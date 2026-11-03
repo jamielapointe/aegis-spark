@@ -88,6 +88,8 @@ is
            Convention       => C,
            External_Name    => "aegis_mock_uart0_sr";
 
+   FR_Reg : Uart_Status_Reg renames SR_Reg;
+
    CR_Reg : Uart_Ctrl_Reg :=
      (Enable     => False,
       Tx_En      => False,
