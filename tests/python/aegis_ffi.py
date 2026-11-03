@@ -887,7 +887,7 @@ def composed_gate_intercept(
 
 
 def mailbox_create(channel_id: int = 1) -> tuple[AegisMailboxChannel, HalosMailboxStatus]:
-    """Create initialized inter-VM SPSC mailbox.
+    """Create initialized inter-VM SPSC mailbox with guaranteed 64-byte alignment.
 
     Args:
         channel_id: Unique 32-bit channel identifier.
@@ -896,7 +896,11 @@ def mailbox_create(channel_id: int = 1) -> tuple[AegisMailboxChannel, HalosMailb
         Tuple of (channel instance, status).
     """
     lib = get_lib()
-    chan = AegisMailboxChannel()
+    buf = (ctypes.c_uint8 * (ctypes.sizeof(AegisMailboxChannel) + 64))()
+    addr = ctypes.addressof(buf)
+    offset = (64 - (addr % 64)) % 64
+    chan = AegisMailboxChannel.from_address(addr + offset)
+    chan._backing_buf = buf
     rc = lib.aegis_mailbox_init(ctypes.byref(chan), ctypes.c_uint32(channel_id))
     return chan, HalosMailboxStatus(rc)
 
