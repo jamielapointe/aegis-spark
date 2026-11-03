@@ -1,0 +1,128 @@
+{
+  "version": 10,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "BUILD_TESTING": "ON"
+      }
+    },
+    {
+      "name": "host-sim-debug",
+      "inherits": "base",
+      "displayName": "Host Simulation Debug",
+      "description": "Host-native simulation debug build with assertions and test suite enabled",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "host-sim-asan",
+      "inherits": "base",
+      "displayName": "Host Simulation ASan/UBSan",
+      "description": "Host-native simulation with AddressSanitizer and UndefinedBehaviorSanitizer",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ENABLE_SANITIZER_ADDRESS": "ON",
+        "ENABLE_SANITIZER_UNDEFINED": "ON",
+        "WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "host-release",
+      "inherits": "base",
+      "displayName": "Host Release",
+      "description": "Optimized release build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTING": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "host-sim-debug",
+      "configurePreset": "host-sim-debug",
+      "displayName": "Build Host Simulation Debug"
+    },
+    {
+      "name": "host-sim-asan",
+      "configurePreset": "host-sim-asan",
+      "displayName": "Build Host Simulation ASan"
+    },
+    {
+      "name": "host-release",
+      "configurePreset": "host-release",
+      "displayName": "Build Host Release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "host-sim-debug",
+      "configurePreset": "host-sim-debug",
+      "displayName": "Test Host Simulation Debug",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": false
+      }
+    },
+    {
+      "name": "host-sim-asan",
+      "configurePreset": "host-sim-asan",
+      "displayName": "Test Host Simulation ASan",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": false
+      }
+    },
+    {
+      "name": "host-release",
+      "configurePreset": "host-release",
+      "displayName": "Test Host Release",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": false
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "host-sim-debug",
+      "displayName": "Host Simulation Debug Workflow",
+      "description": "Configure, build, and test host simulation debug pipeline",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "host-sim-debug"
+        },
+        {
+          "type": "build",
+          "name": "host-sim-debug"
+        },
+        {
+          "type": "test",
+          "name": "host-sim-debug"
+        }
+      ]
+    }
+  ]
+}

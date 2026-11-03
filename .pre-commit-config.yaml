@@ -44,7 +44,7 @@ repos:
         name: clang-tidy C23 static analysis (pixi)
         entry: pixi run clang-tidy
         language: system
-        files: '^src/.*\.(c|h)$|^\.clang-tidy$|^\.clangd$|^aegis_spark\.gpr$'
+        files: '^src/.*\.(c|h)$|^\.clang-tidy$|^\.clangd$|^aegis_spark.*\.gpr$|^CMakeLists\.txt$|^CMakePresets\.json$'
         pass_filenames: false
         require_serial: true
 
@@ -57,15 +57,15 @@ repos:
         name: Verify SPARK Ada 2022 Contracts & Hygiene
         entry: pixi run verify-spark
         language: system
-        files: '^src/.*\.(ads|adb)$|^aegis_spark\.gpr$|^gnat\.adc$'
+        files: '^src/.*\.(ads|adb)$|^aegis_spark.*\.gpr$|^gnat\.adc$'
         pass_filenames: false
         require_serial: true
 
       - id: alire-spark-build-and-prove
         name: Alire SPARK Ada 2022 Validation Build & Gold Proof
-        entry: bash -c 'export PATH="$HOME/.local/bin:$HOME/development/alr/bin:/opt/homebrew/bin:$PATH"; alr --non-interactive build --validation && alr --non-interactive gnatprove --level=2 -j0'
+        entry: bash -c 'export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"; alr --non-interactive build --validation && alr --non-interactive gnatprove --level=2 -j0'
         language: system
-        files: '^src/.*\.(ads|adb|c|h)$|^aegis_spark\.gpr$|^gnat\.adc$|^alire\.toml$'
+        files: '^src/.*\.(ads|adb|c|h)$|^aegis_spark.*\.gpr$|^gnat\.adc$|^alire\.toml$'
         pass_filenames: false
         require_serial: true
 

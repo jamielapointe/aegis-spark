@@ -53,27 +53,58 @@ def test_clang_format_and_tidy_pass() -> None:
 
 
 @pytest.mark.unit
-def test_compile_commands_and_clangd_match_gpr() -> None:
-    """Verify that compile_commands.json and .clangd match aegis_spark.gpr C23 settings."""
-    source_dirs, c_switches, _ = run_clang_tidy.extract_gpr_c_config(REPO_ROOT)
-    assert '-std=c23' in c_switches
-    assert '-ftrivial-auto-var-init=zero' in c_switches
-    assert run_clang_tidy.verify_clangd_config_sync(REPO_ROOT, c_switches) == []
-
-    assert run_clang_tidy.main(['--root', str(REPO_ROOT)]) == 0
-    cdb_path = REPO_ROOT / 'compile_commands.json'
-    assert cdb_path.is_file()
-
+def test_native_cmake_compilation_database_and_clangd() -> None:
+    """Verify that CMake generates native compile_commands.json without regex scraping."""
     import json
+
+    # Verify that the obsolete root compile_commands.json is eliminated
+    root_cdb = REPO_ROOT / 'compile_commands.json'
+    assert not root_cdb.exists(), 'compile_commands.json must not exist at repository root'
+
+    # Verify locate_or_generate_compilation_database finds or creates the preset database
+    cdb_dir = run_clang_tidy.locate_or_generate_compilation_database(REPO_ROOT)
+    assert cdb_dir is not None
+    cdb_path = cdb_dir / 'compile_commands.json'
+    assert cdb_path.is_file()
 
     entries = json.loads(cdb_path.read_text(encoding='utf-8'))
     assert len(entries) >= 1
-    args = entries[0]['arguments']
-    for sw in c_switches:
-        assert sw in args, f'Missing GPR C switch {sw} in compile_commands.json'
-    for rel_dir in source_dirs:
-        expected_inc = f'-I{(REPO_ROOT / rel_dir).resolve()}'
-        assert expected_inc in args, f'Missing include flag {expected_inc} in compile_commands.json'
+    found_halos_logger = False
+    for entry in entries:
+        if 'halos_c_logger.c' in entry.get('file', ''):
+            found_halos_logger = True
+            cmd = entry.get('command', '')
+            assert '-Wall' in cmd
+            assert '-Wextra' in cmd
+            assert '-Wpedantic' in cmd
+            assert '-ftrivial-auto-var-init=zero' in cmd
+            assert '-I' in cmd
+    assert found_halos_logger, 'halos_c_logger.c entry missing from compile_commands.json'
+
+    # Verify .clangd points to the CMake compilation database
+    clangd_path = REPO_ROOT / '.clangd'
+    assert clangd_path.is_file()
+    clangd_content = clangd_path.read_text(encoding='utf-8')
+    assert 'CompilationDatabase: build/host-sim-debug' in clangd_content
+
+
+@pytest.mark.unit
+def test_standalone_static_library_packaging() -> None:
+    """Verify that aegis_spark_lib.gpr configures a standalone static library."""
+    lib_gpr = REPO_ROOT / 'aegis_spark_lib.gpr'
+    demo_gpr = REPO_ROOT / 'aegis_spark.gpr'
+    assert lib_gpr.is_file()
+    assert demo_gpr.is_file()
+
+    lib_content = lib_gpr.read_text(encoding='utf-8')
+    assert 'for Library_Name use "aegis_spark"' in lib_content
+    assert 'for Library_Kind use "static"' in lib_content
+    assert 'for Library_Interface use ("Halos_Safety_Gate", "Halos_Logger", "Uart0_Mmio")' in lib_content
+    assert 'for Library_Auto_Init use "True"' in lib_content
+
+    demo_content = demo_gpr.read_text(encoding='utf-8')
+    assert 'with "aegis_spark_lib.gpr"' in demo_content
+    assert '-B/Library/Developer' not in demo_content
 
 
 @pytest.mark.integration
@@ -97,3 +128,24 @@ def test_aegis_spark_binary_execution() -> None:
     ) in output
     assert 'safe_torque_nm = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]' in output
     assert '[INFO] [AEGIS-SPARK] All Gold-proved safety assertions and checks succeeded.' in output
+
+
+@pytest.mark.integration
+def test_cmake_workflow_preset_execution() -> None:
+    """Verify that CMake workflow preset host-sim-debug configures, builds, and tests."""
+    cmake_bin = run_clang_tidy.find_cmake()
+    assert cmake_bin is not None, 'cmake executable must be available on PATH'
+
+    res = sub.run(
+        [cmake_bin, '--workflow', '--preset', 'host-sim-debug'],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert res.returncode == 0, f'cmake --workflow --preset host-sim-debug failed:\n{res.stdout}\n{res.stderr}'
+
+    static_lib = REPO_ROOT / 'lib' / 'libaegis_spark.a'
+    c_logger_lib = REPO_ROOT / 'build' / 'host-sim-debug' / 'lib' / 'libhalos_c_logger.a'
+    assert static_lib.is_file(), f'libaegis_spark.a missing at {static_lib}'
+    assert c_logger_lib.is_file(), f'libhalos_c_logger.a missing at {c_logger_lib}'
