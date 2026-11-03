@@ -46,6 +46,34 @@ def find_clang_tidy() -> str | None:
     return None
 
 
+def find_cmake() -> str | None:
+    """Locate the cmake executable across Pixi conda environment and PATH.
+
+    Returns:
+        Absolute path to the cmake executable if found, None otherwise.
+    """
+    conda_prefix = os.environ.get('CONDA_PREFIX')
+    candidates: list[str] = []
+    if conda_prefix:
+        candidates.append(str(Path(conda_prefix) / 'bin' / 'cmake'))
+    candidates.append(str(REPO_ROOT / '.pixi' / 'envs' / 'default' / 'bin' / 'cmake'))
+
+    which_cmake = shutil.which('cmake')
+    if which_cmake:
+        candidates.append(which_cmake)
+
+    candidates.extend([
+        '/opt/homebrew/bin/cmake',
+        '/usr/local/bin/cmake',
+        '/usr/bin/cmake',
+    ])
+
+    for candidate in candidates:
+        if Path(candidate).is_file() and os.access(candidate, os.X_OK):
+            return candidate
+    return None
+
+
 def locate_or_generate_compilation_database(root: Path) -> Path | None:
     """Find native compile_commands.json or generate it via CMake preset host-sim-debug.
 
@@ -65,7 +93,7 @@ def locate_or_generate_compilation_database(root: Path) -> Path | None:
             return cdb.parent
 
     # If missing, invoke cmake --preset host-sim-debug to generate it natively
-    cmake_bin = shutil.which('cmake')
+    cmake_bin = find_cmake()
     if cmake_bin:
         res = sub.run(
             [cmake_bin, '--preset', 'host-sim-debug'],

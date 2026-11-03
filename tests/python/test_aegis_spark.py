@@ -133,9 +133,7 @@ def test_aegis_spark_binary_execution() -> None:
 @pytest.mark.integration
 def test_cmake_workflow_preset_execution() -> None:
     """Verify that CMake workflow preset host-sim-debug configures, builds, and tests."""
-    import shutil
-
-    cmake_bin = shutil.which('cmake')
+    cmake_bin = run_clang_tidy.find_cmake()
     assert cmake_bin is not None, 'cmake executable must be available on PATH'
 
     res = sub.run(
