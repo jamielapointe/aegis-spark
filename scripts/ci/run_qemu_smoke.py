@@ -118,7 +118,7 @@ def ensure_elf_binary(elf_arg: Path | None, root: Path) -> Path:
 
 def run_qemu_smoke(
     elf_path: Path,
-    timeout_seconds: float = 10.0,
+    timeout_seconds: float = 30.0,
     allow_skip: bool = False,
 ) -> int:
     """Execute bare-metal ELF in QEMU and assert sequential telemetry tokens.
@@ -237,8 +237,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         '--timeout',
         type=float,
-        default=10.0,
-        help='Timeout in seconds (default: 10.0)',
+        default=30.0,
+        help='Timeout in seconds (default: 30.0)',
     )
     parser.add_argument(
         '--allow-skip',

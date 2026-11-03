@@ -159,6 +159,7 @@ def test_aegis_spark_binary_execution() -> None:
 
 
 @pytest.mark.integration
+@pytest.mark.timeout(120)
 def test_cmake_workflow_preset_execution() -> None:
     """Verify that CMake workflow preset host-sim-debug configures, builds, and tests."""
     import os
@@ -175,6 +176,7 @@ def test_cmake_workflow_preset_execution() -> None:
         capture_output=True,
         text=True,
         check=False,
+        timeout=120,
     )
     assert res.returncode == 0, f'cmake --workflow --preset host-sim-debug failed:\n{res.stdout}\n{res.stderr}'
 
