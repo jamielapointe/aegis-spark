@@ -15,6 +15,9 @@ package body Test_Halos_Mock_Mmio is
         (T, Test_Mock_Mmio_Putc_Nominal'Access,
          "Test Mock MMIO Nominal Byte Transmit");
       Register_Routine
+        (T, Test_Mock_Mmio_Puts_Nominal'Access,
+         "Test Mock MMIO Nominal String Transmit");
+      Register_Routine
         (T, Test_Mock_Mmio_Tx_Empty_Stall'Access,
          "Test Mock MMIO TX Empty Stall Timeout");
       Register_Routine
@@ -68,6 +71,24 @@ package body Test_Halos_Mock_Mmio is
       Assert (Aegis.HAL.Registers.Host_Sim_Get_Last_Tx = 'Z',
               "Host_Sim_Get_Last_Tx should return 'Z'");
    end Test_Mock_Mmio_Putc_Nominal;
+
+   procedure Test_Mock_Mmio_Puts_Nominal
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Timed_Out : Boolean;
+   begin
+      Aegis.HAL.Registers.Host_Sim_Reset;
+      Uart0_Mmio.Uart0_Init (Baud_Divisor => 115_200);
+
+      Uart0_Mmio.Uart0_Puts (Str       => "HALOS_OK",
+                             Timed_Out => Timed_Out);
+
+      Assert (not Timed_Out,
+              "String transmit should not time out under nominal mock status");
+      Assert (Aegis.HAL.Registers.Host_Sim_Get_Last_Tx = 'K',
+              "Host_Sim_Get_Last_Tx should return last character 'K'");
+   end Test_Mock_Mmio_Puts_Nominal;
 
    procedure Test_Mock_Mmio_Tx_Empty_Stall
      (T : in out AUnit.Test_Cases.Test_Case'Class)

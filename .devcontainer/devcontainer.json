@@ -1,0 +1,25 @@
+{
+  "name": "Aegis-SPARK (Ubuntu 24.04)",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "ada.projectFile": "aegis_spark.gpr",
+        "cmake.preset": "host-sim-debug"
+      },
+      "extensions": [
+        "AdaCore.ada",
+        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools",
+        "charliermarsh.ruff",
+        "ms-python.mypy-type-checker"
+      ]
+    }
+  },
+  "remoteUser": "vscode",
+  "postCreateCommand": "pixi install && alr --non-interactive toolchain"
+}

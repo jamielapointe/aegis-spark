@@ -13,6 +13,9 @@ package Test_Halos_Mock_Mmio is
    procedure Test_Mock_Mmio_Putc_Nominal
      (T : in out AUnit.Test_Cases.Test_Case'Class);
 
+   procedure Test_Mock_Mmio_Puts_Nominal
+     (T : in out AUnit.Test_Cases.Test_Case'Class);
+
    procedure Test_Mock_Mmio_Tx_Empty_Stall
      (T : in out AUnit.Test_Cases.Test_Case'Class);
 

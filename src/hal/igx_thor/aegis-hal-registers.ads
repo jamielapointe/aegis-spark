@@ -93,6 +93,8 @@ is
            Import,
            Address          => To_Address (Uart0_Base_Addr + Sr_Offset);
 
+   FR_Reg : Uart_Status_Reg renames SR_Reg;
+
    CR_Reg : Uart_Ctrl_Reg
       with Volatile,
            Async_Writers    => False,

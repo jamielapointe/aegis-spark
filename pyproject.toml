@@ -36,6 +36,7 @@ rumdl = ">=0.3.2"
 
 [tool.pixi.tasks]
 build = "alr --non-interactive build --validation"
+build-qemu = "cd target/qemu-virt-aarch64 && alr --non-interactive exec -- gprbuild --target=aarch64-elf -P aegis_spark_qemu.gpr"
 build-release = "alr --non-interactive build --release"
 check-hygiene = "python scripts/ci/agent_ci_hygiene.py"
 clang-format = "python scripts/ci/run_clang_format.py"
@@ -63,6 +64,7 @@ test-aunit = "alr --non-interactive exec -- gprbuild -P tests/aunit/aegis_spark_
 test-gtest = "cmake --build --preset host-sim-debug --target aegis_spark_gtest && ctest --preset host-sim-debug -R gtest_suite --output-on-failure"
 test-python = "pytest tests/python -v"
 test-python-fuzz = "pytest tests/python/test_hypothesis_fuzz.py -v"
+test-qemu = "python scripts/ci/run_qemu_smoke.py"
 typecheck = "mypy"
 verify-spark = "python scripts/ci/verify_spark_contracts.py"
 
@@ -81,6 +83,7 @@ depends-on = [
     "test-aunit",
     "test-gtest",
     "test-python",
+    "test-qemu",
     "typecheck",
     "verify-spark",
 ]
@@ -92,6 +95,7 @@ depends-on = [
     "test-aunit",
     "test-gtest",
     "test-python",
+    "test-qemu",
     "verify-spark",
 ]
 

@@ -1,0 +1,66 @@
+project Aegis_Spark_Qemu is
+
+   for Target use "aarch64-elf";
+   for Runtime ("Ada") use Project'Project_Dir & "rts";
+   for Languages use ("Ada", "C", "Asm_Cpp");
+
+   for Source_Dirs use
+     ("src",
+      ".",
+      "../../src",
+      "../../src/hal/qemu_virt");
+
+   for Object_Dir use "obj";
+   for Exec_Dir use "../../bin";
+   for Create_Missing_Dirs use "True";
+
+   for Main use ("aegis_spark_qemu.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use
+        ("-O2",
+         "-ffunction-sections",
+         "-fdata-sections",
+         "-gnat2022",
+         "-nostdinc",
+         "-nostdlib",
+         "-march=armv8-a",
+         "-mcpu=cortex-a72",
+         "-mlittle-endian");
+
+      for Default_Switches ("C") use
+        ("-std=c23",
+         "-O2",
+         "-ffunction-sections",
+         "-fdata-sections",
+         "-march=armv8-a",
+         "-mcpu=cortex-a72",
+         "-mlittle-endian");
+
+      for Default_Switches ("Asm_Cpp") use
+        ("-march=armv8-a",
+         "-mcpu=cortex-a72");
+   end Compiler;
+
+   package Linker is
+      for Default_Switches ("Ada") use
+        ("-nostartfiles",
+         "-nostdlib",
+         "-Wl,--gc-sections",
+         "-Wl,-T," & Project'Project_Dir & "virt.ld",
+         "-L" & Project'Project_Dir & "rts/lib",
+         "-lgnat",
+         "-lgcc",
+         "-lc");
+   end Linker;
+
+   package Builder is
+      for Executable ("aegis_spark_qemu.adb") use "aegis_spark_qemu";
+      for Executable_Suffix use ".elf";
+   end Builder;
+
+   package Binder is
+      for Default_Switches ("Ada") use ("-l");
+   end Binder;
+
+end Aegis_Spark_Qemu;

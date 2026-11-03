@@ -91,29 +91,31 @@ if(Alire_FOUND)
   )
   add_dependencies(AegisSpark::aegis_spark aegis_spark_core)
 
-  # AUnit Native Test Runner
-  add_custom_command(
-    OUTPUT "${AEGIS_SPARK_AUNIT_BINARY}"
-    COMMAND
-      "${Alire_EXECUTABLE}" --non-interactive exec -- gprbuild -P tests/aunit/aegis_spark_tests.gpr
-      -XAEGIS_TARGET_MODE=${AEGIS_TARGET_MODE}
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    DEPENDS
-      "${AEGIS_SPARK_LIB_ARCHIVE}"
-      "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/aegis_spark_tests.gpr"
-      "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/gnat_test.adc"
-      "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/src/aunit_runner.adb"
-      "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/src/aegis_spark_suite.ads"
-      "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/src/aegis_spark_suite.adb"
-      "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/src/test_halos_safety_gate.ads"
-      "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/src/test_halos_safety_gate.adb"
-      "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/src/test_halos_mock_mmio.ads"
-      "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/src/test_halos_mock_mmio.adb"
-    COMMENT "Building AUnit native test runner via Alire / GPRbuild"
-  )
+  # AUnit Native Test Runner (Host SIL only)
+  if(AEGIS_TARGET_MODE STREQUAL "host_sim")
+    add_custom_command(
+      OUTPUT "${AEGIS_SPARK_AUNIT_BINARY}"
+      COMMAND
+        "${Alire_EXECUTABLE}" --non-interactive exec -- gprbuild -P
+        tests/aunit/aegis_spark_tests.gpr -XAEGIS_TARGET_MODE=${AEGIS_TARGET_MODE}
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+      DEPENDS
+        "${AEGIS_SPARK_LIB_ARCHIVE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/aegis_spark_tests.gpr"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/gnat_test.adc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/src/aunit_runner.adb"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/src/aegis_spark_suite.ads"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/src/aegis_spark_suite.adb"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/src/test_halos_safety_gate.ads"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/src/test_halos_safety_gate.adb"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/src/test_halos_mock_mmio.ads"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/aunit/src/test_halos_mock_mmio.adb"
+      COMMENT "Building AUnit native test runner via Alire / GPRbuild"
+    )
 
-  add_custom_target(aegis_spark_aunit ALL DEPENDS "${AEGIS_SPARK_AUNIT_BINARY}")
-  add_dependencies(aegis_spark_aunit aegis_spark_core)
+    add_custom_target(aegis_spark_aunit ALL DEPENDS "${AEGIS_SPARK_AUNIT_BINARY}")
+    add_dependencies(aegis_spark_aunit aegis_spark_core)
+  endif()
 else()
   message(STATUS "Alire (alr) not found; skipping SPARK Ada targets")
 endif()
@@ -138,7 +140,7 @@ target_link_libraries(halos_c_logger PRIVATE project_options project_warnings pr
 # -----------------------------------------------------------------------------
 # Shared Library Packaging for Python FFI (libaegis_spark.dylib / .so)
 # -----------------------------------------------------------------------------
-if(Alire_FOUND)
+if(Alire_FOUND AND AEGIS_TARGET_MODE STREQUAL "host_sim")
   add_library(
     aegis_spark_shared
     SHARED
@@ -169,7 +171,7 @@ endif()
 # -----------------------------------------------------------------------------
 # Google Test C23/C++23 Suite (Host SIL & Fault Injection)
 # -----------------------------------------------------------------------------
-if(Alire_FOUND)
+if(Alire_FOUND AND AEGIS_TARGET_MODE STREQUAL "host_sim")
   find_package(GTest REQUIRED)
 
   add_executable(
@@ -200,7 +202,7 @@ include(CTest)
 if(BUILD_TESTING)
   enable_testing()
 
-  if(Alire_FOUND)
+  if(Alire_FOUND AND AEGIS_TARGET_MODE STREQUAL "host_sim")
     add_test(
       NAME host_demo_verification
       COMMAND "${AEGIS_SPARK_DEMO_BINARY}"
@@ -226,13 +228,60 @@ if(BUILD_TESTING)
     )
   endif()
 
-  find_program(PIXI_EXECUTABLE NAMES pixi)
-  if(PIXI_EXECUTABLE)
+  if(AEGIS_TARGET_MODE STREQUAL "host_sim")
+    find_program(PIXI_EXECUTABLE NAMES pixi)
+    if(PIXI_EXECUTABLE)
+      add_test(
+        NAME python_test_suite
+        COMMAND "${PIXI_EXECUTABLE}" run test-python
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+      )
+      set_tests_properties(python_test_suite PROPERTIES ENVIRONMENT "AEGIS_INSIDE_CTEST=1")
+    endif()
+  endif()
+
+  find_program(QEMU_AARCH64_EXECUTABLE NAMES qemu-system-aarch64)
+  find_package(Python3 COMPONENTS Interpreter)
+  set(AEGIS_SPARK_QEMU_ELF "${CMAKE_CURRENT_SOURCE_DIR}/bin/aegis_spark_qemu.elf")
+
+  if(Alire_FOUND)
+    add_custom_command(
+      OUTPUT "${AEGIS_SPARK_QEMU_ELF}"
+      COMMAND
+        "${Alire_EXECUTABLE}" --non-interactive exec -- gprbuild --target=aarch64-elf -P
+        aegis_spark_qemu.gpr
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/target/qemu-virt-aarch64"
+      DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/target/qemu-virt-aarch64/boot.S"
+        "${CMAKE_CURRENT_SOURCE_DIR}/target/qemu-virt-aarch64/virt.ld"
+        "${CMAKE_CURRENT_SOURCE_DIR}/target/qemu-virt-aarch64/src/aegis_spark_qemu.adb"
+        "${CMAKE_CURRENT_SOURCE_DIR}/target/qemu-virt-aarch64/src/qemu_exit.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/target/qemu-virt-aarch64/src/qemu_exit.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/target/qemu-virt-aarch64/src/last_chance.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/target/qemu-virt-aarch64/aegis_spark_qemu.gpr"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/hal/qemu_virt/aegis-hal-registers.ads"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/uart0_mmio.ads"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/uart0_mmio.adb"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_safety_gate.ads"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_safety_gate.adb"
+      COMMENT "Building bare-metal ARM64 QEMU ELF image via Alire / GPRbuild"
+    )
+
+    add_custom_target(aegis_spark_qemu_image ALL DEPENDS "${AEGIS_SPARK_QEMU_ELF}")
+  endif()
+
+  if(Python3_Interpreter_FOUND)
+    set(QEMU_SMOKE_ARGS "--elf" "${AEGIS_SPARK_QEMU_ELF}")
+    if(NOT QEMU_AARCH64_EXECUTABLE)
+      list(APPEND QEMU_SMOKE_ARGS "--allow-skip")
+    endif()
     add_test(
-      NAME python_test_suite
-      COMMAND "${PIXI_EXECUTABLE}" run test-python
+      NAME qemu_smoke
+      COMMAND
+        "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/ci/run_qemu_smoke.py"
+        ${QEMU_SMOKE_ARGS}
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
-    set_tests_properties(python_test_suite PROPERTIES ENVIRONMENT "AEGIS_INSIDE_CTEST=1")
+    set_tests_properties(qemu_smoke PROPERTIES TIMEOUT 15)
   endif()
 endif()
