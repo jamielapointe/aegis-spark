@@ -247,9 +247,7 @@ if(BUILD_TESTING)
   if(Alire_FOUND)
     add_custom_command(
       OUTPUT "${AEGIS_SPARK_QEMU_ELF}"
-      COMMAND
-        "${Alire_EXECUTABLE}" --non-interactive exec -- gprbuild --target=aarch64-elf -P
-        aegis_spark_qemu.gpr
+      COMMAND "${Alire_EXECUTABLE}" --non-interactive build
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/target/qemu-virt-aarch64"
       DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/target/qemu-virt-aarch64/boot.S"
