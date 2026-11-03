@@ -52,6 +52,40 @@ class HalosSafetyEnvelope(ctypes.Structure):
 SafeTorqueArray = ctypes.c_float * HALOS_DOF_COUNT
 
 
+class AegisUartDataReg(ctypes.Structure):
+    """Mock UART Data Register bitfield matching struct aegis_uart_data_reg."""
+
+    _fields_ = [
+        ('data', ctypes.c_uint32, 8),
+        ('reserved', ctypes.c_uint32, 24),
+    ]
+
+
+class AegisUartStatusReg(ctypes.Structure):
+    """Mock UART Status Register bitfield matching struct aegis_uart_status_reg."""
+
+    _fields_ = [
+        ('tx_empty', ctypes.c_uint32, 1),
+        ('rx_full', ctypes.c_uint32, 1),
+        ('busy', ctypes.c_uint32, 1),
+        ('err_ovr', ctypes.c_uint32, 1),
+        ('reserved', ctypes.c_uint32, 28),
+    ]
+
+
+class AegisUartCtrlReg(ctypes.Structure):
+    """Mock UART Control Register bitfield matching struct aegis_uart_ctrl_reg."""
+
+    _fields_ = [
+        ('enable', ctypes.c_uint32, 1),
+        ('tx_en', ctypes.c_uint32, 1),
+        ('rx_en', ctypes.c_uint32, 1),
+        ('reserved_1', ctypes.c_uint32, 4),
+        ('loopback', ctypes.c_uint32, 1),
+        ('reserved_2', ctypes.c_uint32, 24),
+    ]
+
+
 def locate_shared_library() -> Path:
     """Locate libaegis_spark shared library across lib/ and build/ directories.
 
@@ -226,3 +260,33 @@ def set_mock_uart0_baud(value: int) -> None:
     lib = get_lib()
     ptr = ctypes.c_uint32.in_dll(lib, 'aegis_mock_uart0_baud')
     ptr.value = value
+
+
+def get_mock_uart0_dr_reg() -> AegisUartDataReg:
+    """Read mock UART0 Data Register as structured bitfields.
+
+    Returns:
+        AegisUartDataReg overlay on in-RAM mock register.
+    """
+    lib = get_lib()
+    return AegisUartDataReg.in_dll(lib, 'aegis_mock_uart0_dr')
+
+
+def get_mock_uart0_sr_reg() -> AegisUartStatusReg:
+    """Read mock UART0 Status Register as structured bitfields.
+
+    Returns:
+        AegisUartStatusReg overlay on in-RAM mock register.
+    """
+    lib = get_lib()
+    return AegisUartStatusReg.in_dll(lib, 'aegis_mock_uart0_sr')
+
+
+def get_mock_uart0_cr_reg() -> AegisUartCtrlReg:
+    """Read mock UART0 Control Register as structured bitfields.
+
+    Returns:
+        AegisUartCtrlReg overlay on in-RAM mock register.
+    """
+    lib = get_lib()
+    return AegisUartCtrlReg.in_dll(lib, 'aegis_mock_uart0_cr')

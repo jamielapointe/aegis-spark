@@ -1,5 +1,6 @@
 """Hypothesis property-based fuzzing suite verifying Aegis-SPARK safety kernel invariants."""
 
+import ctypes
 import math
 
 from hypothesis import given
@@ -9,10 +10,15 @@ from hypothesis import strategies as st
 from tests.python.aegis_ffi import HALOS_DOF_COUNT
 from tests.python.aegis_ffi import HALOS_MAX_CMD_AGE_NS
 from tests.python.aegis_ffi import MAX_HARDWARE_TORQUE_NM
+from tests.python.aegis_ffi import AegisUartCtrlReg
+from tests.python.aegis_ffi import AegisUartDataReg
+from tests.python.aegis_ffi import AegisUartStatusReg
 from tests.python.aegis_ffi import HalosJointCmd
 from tests.python.aegis_ffi import HalosSafetyEnvelope
 from tests.python.aegis_ffi import HalosSafetyState
 from tests.python.aegis_ffi import HalosStatus
+from tests.python.aegis_ffi import SafeTorqueArray
+from tests.python.aegis_ffi import get_lib
 from tests.python.aegis_ffi import get_mock_uart0_baud
 from tests.python.aegis_ffi import get_mock_uart0_cr
 from tests.python.aegis_ffi import get_mock_uart0_dr
@@ -204,8 +210,47 @@ def test_invariant_5_monotonic_timestamps_and_freshness(
     assert all(math.isclose(t, 0.0, abs_tol=1e-7) for t in safe_torques)
 
 
+def test_c23_spark_abi_layout_and_sizeof_parity() -> None:
+    """Verify ctypes struct sizes, alignments, and field offsets match ISO C23 and SPARK Ada representations."""
+    # HalosJointCmd: 32 bytes, 8-byte aligned, timestamp at 0, torques at 8
+    assert ctypes.sizeof(HalosJointCmd) == 32
+    assert ctypes.alignment(HalosJointCmd) == 8
+    assert HalosJointCmd.timestamp_ns.offset == 0
+    assert HalosJointCmd.desired_torque_nm.offset == 8
+
+    # HalosSafetyEnvelope: 28 bytes (24 bytes limits + 1 byte state + 3 bytes padding), 4-byte aligned
+    assert ctypes.sizeof(HalosSafetyEnvelope) == 28
+    assert ctypes.alignment(HalosSafetyEnvelope) == 4
+    assert HalosSafetyEnvelope.max_abs_torque_nm.offset == 0
+    assert HalosSafetyEnvelope.state.offset == 24
+
+    # SafeTorqueArray: 24 bytes (6 * 4 bytes c_float), 4-byte aligned
+    assert ctypes.sizeof(SafeTorqueArray) == 24
+    assert ctypes.alignment(SafeTorqueArray) == 4
+
+    # Mock MMIO register bitfield structs: each 4 bytes, 4-byte aligned
+    assert ctypes.sizeof(AegisUartDataReg) == 4
+    assert ctypes.alignment(AegisUartDataReg) == 4
+
+    assert ctypes.sizeof(AegisUartStatusReg) == 4
+    assert ctypes.alignment(AegisUartStatusReg) == 4
+
+    assert ctypes.sizeof(AegisUartCtrlReg) == 4
+    assert ctypes.alignment(AegisUartCtrlReg) == 4
+
+    # In-RAM mock MMIO symbol memory sizes in libaegis_spark
+    lib = get_lib()
+    assert ctypes.sizeof(ctypes.c_uint32.in_dll(lib, 'aegis_mock_uart0_dr')) == 4
+    assert ctypes.sizeof(ctypes.c_uint32.in_dll(lib, 'aegis_mock_uart0_sr')) == 4
+    assert ctypes.sizeof(ctypes.c_uint32.in_dll(lib, 'aegis_mock_uart0_cr')) == 4
+    assert ctypes.sizeof(ctypes.c_uint32.in_dll(lib, 'aegis_mock_uart0_baud')) == 4
+
+
 def test_mock_mmio_registers_python_access() -> None:
     """Verify that Python ctypes can read and write in-RAM mock MMIO registers without SIGSEGV."""
+    lib = get_lib()
+
+    # Raw register access
     set_mock_uart0_dr(0x42)
     assert get_mock_uart0_dr() & 0xFF == 0x42
 
@@ -217,3 +262,23 @@ def test_mock_mmio_registers_python_access() -> None:
 
     set_mock_uart0_baud(115200)
     assert get_mock_uart0_baud() == 115200
+
+    # Structured bitfield overlay access matching C23 / SPARK Ada
+    dr_struct = AegisUartDataReg.in_dll(lib, 'aegis_mock_uart0_dr')
+    assert ctypes.sizeof(dr_struct) == 4
+    assert dr_struct.data == 0x42
+    assert dr_struct.reserved == 0
+
+    sr_struct = AegisUartStatusReg.in_dll(lib, 'aegis_mock_uart0_sr')
+    assert ctypes.sizeof(sr_struct) == 4
+    assert sr_struct.tx_empty == 1
+    assert sr_struct.rx_full == 0
+    assert sr_struct.busy == 1
+    assert sr_struct.err_ovr == 0
+
+    cr_struct = AegisUartCtrlReg.in_dll(lib, 'aegis_mock_uart0_cr')
+    assert ctypes.sizeof(cr_struct) == 4
+    assert cr_struct.enable == 1
+    assert cr_struct.tx_en == 1
+    assert cr_struct.rx_en == 0
+    assert cr_struct.loopback == 1

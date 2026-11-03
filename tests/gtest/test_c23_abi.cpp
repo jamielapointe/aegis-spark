@@ -50,10 +50,16 @@ static_assert(offsetof(struct halos_safety_envelope, state) == 24U,
 // Mock MMIO Register Struct ABI parity
 static_assert(sizeof(struct aegis_uart_data_reg) == 4U,
               "ABI requires 4-byte aegis_uart_data_reg");
+static_assert(alignof(struct aegis_uart_data_reg) == 4U,
+              "ABI requires 4-byte aligned aegis_uart_data_reg");
 static_assert(sizeof(struct aegis_uart_status_reg) == 4U,
               "ABI requires 4-byte aegis_uart_status_reg");
+static_assert(alignof(struct aegis_uart_status_reg) == 4U,
+              "ABI requires 4-byte aligned aegis_uart_status_reg");
 static_assert(sizeof(struct aegis_uart_ctrl_reg) == 4U,
               "ABI requires 4-byte aegis_uart_ctrl_reg");
+static_assert(alignof(struct aegis_uart_ctrl_reg) == 4U,
+              "ABI requires 4-byte aligned aegis_uart_ctrl_reg");
 
 TEST(C23AbiTest, EnumValueParity) {
   EXPECT_EQ(HALOS_OK, 0);

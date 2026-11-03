@@ -1,13 +1,22 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <iterator>
 #include <limits>
 
 #include "aegis_spark.h"
 
 class HalosFaultInjectionTest : public ::testing::Test {
  protected:
+  static constexpr float kSentinelTorque = 99.0F;
+
+  void ResetSafeTorquesToSentinel() {
+    std::fill(std::begin(safe_torque_out_), std::end(safe_torque_out_),
+              kSentinelTorque);
+  }
+
   void SetUp() override {
     // Initialize envelope to active with 100.0 Nm limit per joint
     for (size_t i = 0; i < HALOS_DOF_COUNT; ++i) {
@@ -21,10 +30,10 @@ class HalosFaultInjectionTest : public ::testing::Test {
       cmd_.desired_torque_nm[i] = 10.0F;
     }
 
-    // Zero out safe torque array
-    for (size_t i = 0; i < HALOS_DOF_COUNT; ++i) {
-      safe_torque_out_[i] = 0.0F;
-    }
+    // Pre-populate safe torque array with non-zero sentinel values so tests
+    // genuinely verify that halos_spark_intercept_joint_cmd actively drives
+    // safe torques to 0.0F on error.
+    ResetSafeTorquesToSentinel();
     status_ = static_cast<enum halos_status>(-1);
   }
 
@@ -202,6 +211,9 @@ TEST_F(HalosFaultInjectionTest, FaultEstopStateIsImmutableAndLatched) {
   EXPECT_EQ(env_.state, HALOS_STATE_FAULT_ESTOP);
 
   // Step 2: Send completely valid, nominal, fresh command
+  // Re-populate output buffer with sentinel values to verify Step 2 actively
+  // zeroes outputs
+  ResetSafeTorquesToSentinel();
   cmd_.timestamp_ns = 10'500'000ULL;
   now_ns = 11'000'000ULL;  // 0.5 ms latency
   for (size_t i = 0; i < HALOS_DOF_COUNT; ++i) {
