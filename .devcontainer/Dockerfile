@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ninja-build \
     pkg-config \
     qemu-system-arm \
+    ipxe-qemu \
     unzip \
     wget \
     xz-utils \

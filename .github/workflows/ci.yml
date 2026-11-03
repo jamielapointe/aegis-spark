@@ -87,7 +87,7 @@ jobs:
       - name: Install QEMU system emulator
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then
-            sudo apt-get update && sudo apt-get install -y --no-install-recommends qemu-system-arm
+            sudo apt-get update && sudo apt-get install -y qemu-system-arm ipxe-qemu
           elif [ "${{ runner.os }}" = "macOS" ]; then
             brew install qemu || true
           fi
