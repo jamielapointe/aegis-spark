@@ -10,6 +10,8 @@ project Aegis_Spark_Qemu is
       "../../src",
       "../../src/hal/qemu_virt");
 
+   for Excluded_Source_Files use ("halos_mailbox.c");
+
    for Object_Dir use "obj";
    for Exec_Dir use "../../bin";
    for Create_Missing_Dirs use "True";

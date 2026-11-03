@@ -62,6 +62,16 @@ if(Alire_FOUND)
       "${CMAKE_CURRENT_SOURCE_DIR}/src/hal/igx_thor/aegis-hal-registers.ads"
       "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_safety_gate.ads"
       "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_safety_gate.adb"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_watchdog.ads"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_watchdog.adb"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_hsm.ads"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_hsm.adb"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_kinematics.ads"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_kinematics.adb"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_mailbox.ads"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_mailbox.adb"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_mailbox.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_mailbox.c"
       "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_logger.ads"
       "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_logger.adb"
       "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_c_logger.h"
@@ -137,6 +147,20 @@ target_include_directories(
 
 target_link_libraries(halos_c_logger PRIVATE project_options project_warnings project_sanitizers)
 
+add_library(
+  halos_mailbox
+  STATIC
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_mailbox.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/halos_mailbox.h"
+)
+
+target_include_directories(
+  halos_mailbox
+  PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>" "$<INSTALL_INTERFACE:include>"
+)
+
+target_link_libraries(halos_mailbox PRIVATE project_options project_warnings project_sanitizers)
+
 # -----------------------------------------------------------------------------
 # Shared Library Packaging for Python FFI (libaegis_spark.dylib / .so)
 # -----------------------------------------------------------------------------
@@ -157,6 +181,7 @@ if(Alire_FOUND AND AEGIS_TARGET_MODE STREQUAL "host_sim")
     aegis_spark_shared
     PRIVATE
       "$<LINK_LIBRARY:WHOLE_ARCHIVE,AegisSpark::aegis_spark>"
+      "$<LINK_LIBRARY:WHOLE_ARCHIVE,halos_mailbox>"
       "${Alire_GNAT_RUNTIME_LIBRARY}"
       project_options
       project_warnings
@@ -178,6 +203,7 @@ if(Alire_FOUND AND AEGIS_TARGET_MODE STREQUAL "host_sim")
     aegis_spark_gtest
     "${CMAKE_CURRENT_SOURCE_DIR}/tests/gtest/test_c23_abi.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/tests/gtest/test_fault_injection.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/gtest/test_mailbox_spsc.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/tests/gtest/test_mock_mmio.cpp"
   )
 
@@ -188,6 +214,7 @@ if(Alire_FOUND AND AEGIS_TARGET_MODE STREQUAL "host_sim")
     PRIVATE
       GTest::gtest_main
       AegisSpark::aegis_spark
+      halos_mailbox
       "${Alire_GNAT_RUNTIME_LIBRARY}"
       project_options
       project_warnings

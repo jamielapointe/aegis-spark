@@ -13,10 +13,18 @@ from tests.python.aegis_ffi import MAX_HARDWARE_TORQUE_NM
 from tests.python.aegis_ffi import AegisUartCtrlReg
 from tests.python.aegis_ffi import AegisUartDataReg
 from tests.python.aegis_ffi import AegisUartStatusReg
+from tests.python.aegis_ffi import HalosHsmState
+from tests.python.aegis_ffi import HalosHsmStatus
 from tests.python.aegis_ffi import HalosJointCmd
+from tests.python.aegis_ffi import HalosKinematicCmd
+from tests.python.aegis_ffi import HalosMailboxStatus
+from tests.python.aegis_ffi import HalosMsgType
 from tests.python.aegis_ffi import HalosSafetyEnvelope
 from tests.python.aegis_ffi import HalosSafetyState
 from tests.python.aegis_ffi import HalosStatus
+from tests.python.aegis_ffi import HalosTrajectoryPayload
+from tests.python.aegis_ffi import HalosWatchdogState
+from tests.python.aegis_ffi import HalosWatchdogStatus
 from tests.python.aegis_ffi import SafeTorqueArray
 from tests.python.aegis_ffi import get_lib
 from tests.python.aegis_ffi import get_mock_uart0_baud
@@ -24,10 +32,18 @@ from tests.python.aegis_ffi import get_mock_uart0_cr
 from tests.python.aegis_ffi import get_mock_uart0_dr
 from tests.python.aegis_ffi import get_mock_uart0_sr
 from tests.python.aegis_ffi import intercept_joint_cmd
+from tests.python.aegis_ffi import kinematics_create
+from tests.python.aegis_ffi import kinematics_intercept
+from tests.python.aegis_ffi import mailbox_crc
+from tests.python.aegis_ffi import mailbox_create
+from tests.python.aegis_ffi import mailbox_pop
+from tests.python.aegis_ffi import mailbox_push
 from tests.python.aegis_ffi import set_mock_uart0_baud
 from tests.python.aegis_ffi import set_mock_uart0_cr
 from tests.python.aegis_ffi import set_mock_uart0_dr
 from tests.python.aegis_ffi import set_mock_uart0_sr
+from tests.python.aegis_ffi import watchdog_create
+from tests.python.aegis_ffi import watchdog_pet
 
 
 def create_envelope(
@@ -282,3 +298,144 @@ def test_mock_mmio_registers_python_access() -> None:
     assert cr_struct.tx_en == 1
     assert cr_struct.rx_en == 0
     assert cr_struct.loopback == 1
+
+
+@settings(max_examples=300, deadline=None)
+@given(
+    positions=st.lists(
+        st.floats(allow_nan=True, allow_infinity=True, width=32),
+        min_size=HALOS_DOF_COUNT,
+        max_size=HALOS_DOF_COUNT,
+    ),
+    velocities=st.lists(
+        st.floats(allow_nan=True, allow_infinity=True, width=32),
+        min_size=HALOS_DOF_COUNT,
+        max_size=HALOS_DOF_COUNT,
+    ),
+    torques=st.lists(
+        st.floats(allow_nan=True, allow_infinity=True, width=32),
+        min_size=HALOS_DOF_COUNT,
+        max_size=HALOS_DOF_COUNT,
+    ),
+)
+def test_hypothesis_6dof_kinematics_envelope_and_fail_safe_latch(
+    positions: list[float],
+    velocities: list[float],
+    torques: list[float],
+) -> None:
+    """Property test verifying 6-DOF kinematic envelope clamping and zeroing on violations."""
+    state = kinematics_create(pos_limit=3.14, vel_limit=10.0, torque_limit=100.0, jerk_limit=50.0)
+    state.hsm.state = int(HalosHsmState.HALOS_HSM_ACTIVE)
+
+    cmd = HalosKinematicCmd()
+    cmd.timestamp_ns = 1_000_000
+    for i in range(HALOS_DOF_COUNT):
+        cmd.position_rad[i] = positions[i]
+        cmd.velocity_rad[i] = velocities[i]
+        cmd.torque_nm[i] = torques[i]
+
+    # Pre-check whether command violates envelope or is non-finite
+    is_valid = True
+    for i in range(HALOS_DOF_COUNT):
+        p, v, t = positions[i], velocities[i], torques[i]
+        if not (math.isfinite(p) and math.isfinite(v) and math.isfinite(t)):
+            is_valid = False
+            break
+        if abs(p) > 3.14 or abs(v) > 10.0 or abs(t) > 100.0 or abs(t) > 50.0:
+            is_valid = False
+            break
+
+    safe_tau, safe_vel, status = kinematics_intercept(state, cmd)
+
+    if not is_valid:
+        assert status != HalosHsmStatus.HALOS_HSM_OK
+        assert state.hsm.state == HalosHsmState.HALOS_HSM_FAULT_ESTOP
+        assert all(math.isclose(x, 0.0, abs_tol=1e-7) for x in safe_tau)
+        assert all(math.isclose(x, 0.0, abs_tol=1e-7) for x in safe_vel)
+    else:
+        assert status == HalosHsmStatus.HALOS_HSM_OK
+        assert state.hsm.state == HalosHsmState.HALOS_HSM_ACTIVE
+        assert all(math.isclose(safe_tau[i], torques[i], abs_tol=1e-5) for i in range(HALOS_DOF_COUNT))
+        assert all(math.isclose(safe_vel[i], velocities[i], abs_tol=1e-5) for i in range(HALOS_DOF_COUNT))
+
+
+@settings(max_examples=300, deadline=None)
+@given(
+    start_ns=st.integers(min_value=1_000_000, max_value=1_000_000_000),
+    delta_ns=st.integers(min_value=-1_000_000, max_value=10_000_000),
+)
+def test_hypothesis_windowed_watchdog_timing_invariants(
+    start_ns: int,
+    delta_ns: int,
+) -> None:
+    """Property test verifying windowed watchdog bounds [0.5 ms, 5.0 ms] and monotonic clock."""
+    min_ns = 500_000  # 0.5 ms
+    max_ns = 5_000_000  # 5.0 ms
+    wd, status = watchdog_create(min_ns=min_ns, max_ns=max_ns, start_ns=start_ns)
+    assert status == HalosWatchdogStatus.WD_OK
+    assert wd.state == HalosWatchdogState.WD_ARMED
+
+    now_ns = start_ns + delta_ns
+    pet_status = watchdog_pet(wd, now_ns)
+
+    if delta_ns < 0:
+        assert pet_status == HalosWatchdogStatus.WD_ERR_TIME_REWIND
+        assert wd.state == HalosWatchdogState.WD_FAULT_CLOCK
+    elif delta_ns < min_ns:
+        assert pet_status == HalosWatchdogStatus.WD_ERR_TOO_EARLY
+        assert wd.state == HalosWatchdogState.WD_FAULT_EARLY
+    elif delta_ns > max_ns:
+        assert pet_status == HalosWatchdogStatus.WD_ERR_TOO_LATE
+        assert wd.state == HalosWatchdogState.WD_FAULT_LATE
+    else:
+        assert pet_status == HalosWatchdogStatus.WD_OK
+        assert wd.state == HalosWatchdogState.WD_ARMED
+
+
+@settings(max_examples=200, deadline=None)
+@given(
+    pos=st.lists(
+        st.floats(min_value=-10.0, max_value=10.0, allow_nan=False, allow_infinity=False, width=32),
+        min_size=HALOS_DOF_COUNT,
+        max_size=HALOS_DOF_COUNT,
+    ),
+    vel=st.lists(
+        st.floats(min_value=-5.0, max_value=5.0, allow_nan=False, allow_infinity=False, width=32),
+        min_size=HALOS_DOF_COUNT,
+        max_size=HALOS_DOF_COUNT,
+    ),
+    tau=st.lists(
+        st.floats(min_value=-20.0, max_value=20.0, allow_nan=False, allow_infinity=False, width=32),
+        min_size=HALOS_DOF_COUNT,
+        max_size=HALOS_DOF_COUNT,
+    ),
+)
+def test_hypothesis_mailbox_spsc_crc_and_payload_roundtrip(
+    pos: list[float],
+    vel: list[float],
+    tau: list[float],
+) -> None:
+    """Property test verifying SPSC mailbox serialization, CRC-32 integrity, and pop fidelity."""
+    chan, init_status = mailbox_create(channel_id=42)
+    assert init_status == HalosMailboxStatus.HALOS_MBX_OK
+
+    payload = HalosTrajectoryPayload()
+    for i in range(HALOS_DOF_COUNT):
+        payload.position_rad[i] = pos[i]
+        payload.velocity_rad_s[i] = vel[i]
+        payload.torque_nm[i] = tau[i]
+        payload.acceleration_rad_s2[i] = 0.0
+
+    crc = mailbox_crc(payload)
+    now_ns = 2_000_000
+    push_rc = mailbox_push(chan, HalosMsgType.HALOS_MSG_KINEMATIC_CMD, 0, now_ns, payload)
+    assert push_rc == HalosMailboxStatus.HALOS_MBX_OK
+
+    pop_msg, pop_rc = mailbox_pop(chan, now_ns + 50_000)
+    assert pop_rc == HalosMailboxStatus.HALOS_MBX_OK
+    assert pop_msg.header.crc32 == crc
+
+    for i in range(HALOS_DOF_COUNT):
+        assert math.isclose(pop_msg.payload.position_rad[i], pos[i], abs_tol=1e-5)
+        assert math.isclose(pop_msg.payload.velocity_rad_s[i], vel[i], abs_tol=1e-5)
+        assert math.isclose(pop_msg.payload.torque_nm[i], tau[i], abs_tol=1e-5)
