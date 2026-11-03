@@ -16,3 +16,9 @@ executables = ["aegis_spark"]
 
 [[depends-on]]
 gnatprove = "^16.1.0"
+
+[[depends-on]]
+sparklib = "^16.1.0"
+
+[[depends-on]]
+aunit = "^26.0.0"

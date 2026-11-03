@@ -13,7 +13,8 @@
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "BUILD_TESTING": "ON"
+        "BUILD_TESTING": "ON",
+        "AEGIS_TARGET_MODE": "host_sim"
       }
     },
     {
@@ -121,6 +122,25 @@
         {
           "type": "test",
           "name": "host-sim-debug"
+        }
+      ]
+    },
+    {
+      "name": "host-sim-asan",
+      "displayName": "Host Simulation ASan Workflow",
+      "description": "Configure, build, and test host simulation ASan pipeline",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "host-sim-asan"
+        },
+        {
+          "type": "build",
+          "name": "host-sim-asan"
+        },
+        {
+          "type": "test",
+          "name": "host-sim-asan"
         }
       ]
     }

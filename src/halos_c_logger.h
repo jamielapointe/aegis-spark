@@ -5,6 +5,9 @@
 
 #ifdef __cplusplus
 extern "C" {
+#ifndef restrict
+#define restrict __restrict
+#endif
 #endif
 
 static constexpr size_t HALOS_DOF_COUNT = 6U;
@@ -52,8 +55,7 @@ static_assert(sizeof(enum halos_log_status) == 4U,
     uint32_t step_id, uint64_t now_ns,
     const struct halos_joint_cmd* restrict cmd_in,
     const struct halos_safety_envelope* restrict env,
-    const float safe_out[restrict static HALOS_DOF_COUNT],
-    enum halos_status status);
+    const float safe_out[HALOS_DOF_COUNT], enum halos_status status);
 
 [[nodiscard]] enum halos_log_status halos_log_suite_footer(void);
 
@@ -64,8 +66,7 @@ void halos_c_log_intercept_step(
     uint32_t step_id, uint64_t now_ns,
     const struct halos_joint_cmd* restrict cmd_in,
     const struct halos_safety_envelope* restrict env,
-    const float safe_out[restrict static HALOS_DOF_COUNT],
-    enum halos_status status);
+    const float safe_out[HALOS_DOF_COUNT], enum halos_status status);
 
 void halos_c_log_suite_footer(void);
 

@@ -87,7 +87,9 @@ jobs:
       - name: Run Gold-level SPARK formal verification (gnatprove)
         run: pixi run prove-ci
 
-      - name: Build validation binary & execute Python/SPARK test suite
+      - name: Build validation binary & execute multi-language test suite
         run: |
           pixi run test-ada
+          pixi run test-aunit
+          pixi run cmake-workflow
           pixi run test-python

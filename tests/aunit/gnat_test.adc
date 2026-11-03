@@ -1,0 +1,6 @@
+--  tests/aunit/gnat_test.adc
+--  Configuration pragmas for AUnit test harness.
+--  Enables Ada 2022 and assertions while isolating production No_Allocators restrictions.
+pragma Ada_2022;
+pragma Assertion_Policy (Check);
+pragma Overflow_Mode (General => Strict, Assertions => Eliminated);
