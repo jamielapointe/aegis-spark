@@ -68,12 +68,14 @@ project Aegis_Spark_Lib is
          "-gnaty3aAbBcefhiIklnOprStux",
          "-gnaty-d",
          "-gnatyM100",
-         "-fcallgraph-info=su,da");
+         "-fcallgraph-info=su,da",
+         "-fPIC");
 
       for Default_Switches ("C") use
         ("-std=c23",
          "-O3",
          "-g",
+         "-fPIC",
          "-Wall",
          "-Wextra",
          "-Wpedantic",

@@ -25,7 +25,8 @@ project Aegis_Spark is
          "-gnaty3aAbBcefhiIklnOprStux",
          "-gnaty-d",
          "-gnatyM100",
-         "-fcallgraph-info=su,da");
+         "-fcallgraph-info=su,da",
+         "-fPIC");
    end Compiler;
 
    package Binder is
