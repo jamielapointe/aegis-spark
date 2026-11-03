@@ -106,6 +106,8 @@ def locate_or_generate_compilation_database(root: Path) -> Path | None:
             target_cdb = root / 'build' / 'host-sim-debug' / 'compile_commands.json'
             if target_cdb.is_file():
                 return target_cdb.parent
+        else:
+            sys.stderr.write(f'[WARN] cmake --preset host-sim-debug failed:\n{res.stdout}\n{res.stderr}\n')
 
     return None
 

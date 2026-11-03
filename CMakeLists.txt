@@ -169,27 +169,29 @@ endif()
 # -----------------------------------------------------------------------------
 # Google Test C23/C++23 Suite (Host SIL & Fault Injection)
 # -----------------------------------------------------------------------------
-find_package(GTest REQUIRED)
+if(Alire_FOUND)
+  find_package(GTest REQUIRED)
 
-add_executable(
-  aegis_spark_gtest
-  "${CMAKE_CURRENT_SOURCE_DIR}/tests/gtest/test_c23_abi.cpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/tests/gtest/test_fault_injection.cpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/tests/gtest/test_mock_mmio.cpp"
-)
+  add_executable(
+    aegis_spark_gtest
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/gtest/test_c23_abi.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/gtest/test_fault_injection.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/gtest/test_mock_mmio.cpp"
+  )
 
-target_include_directories(aegis_spark_gtest PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+  target_include_directories(aegis_spark_gtest PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-target_link_libraries(
-  aegis_spark_gtest
-  PRIVATE
-    GTest::gtest_main
-    AegisSpark::aegis_spark
-    "${Alire_GNAT_RUNTIME_LIBRARY}"
-    project_options
-    project_warnings
-    project_sanitizers
-)
+  target_link_libraries(
+    aegis_spark_gtest
+    PRIVATE
+      GTest::gtest_main
+      AegisSpark::aegis_spark
+      "${Alire_GNAT_RUNTIME_LIBRARY}"
+      project_options
+      project_warnings
+      project_sanitizers
+  )
+endif()
 
 # -----------------------------------------------------------------------------
 # Testing Orchestration (CTest)
@@ -216,13 +218,13 @@ if(BUILD_TESTING)
       COMMAND "${AEGIS_SPARK_AUNIT_BINARY}"
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
-  endif()
 
-  add_test(
-    NAME gtest_suite
-    COMMAND aegis_spark_gtest
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-  )
+    add_test(
+      NAME gtest_suite
+      COMMAND aegis_spark_gtest
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+  endif()
 
   find_program(PIXI_EXECUTABLE NAMES pixi)
   if(PIXI_EXECUTABLE)
