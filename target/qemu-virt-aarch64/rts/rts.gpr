@@ -20,6 +20,7 @@ project RTS is
          "-fdata-sections",
          "-march=armv8-a",
          "-mcpu=cortex-a72",
-         "-mlittle-endian");
+         "-mlittle-endian",
+         "-mstrict-align");
    end Compiler;
 end RTS;
