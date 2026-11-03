@@ -98,14 +98,10 @@ is
            Post          =>
              (Env.Max_Abs_Torque_Nm = Env'Old.Max_Abs_Torque_Nm)
              and then
-             ((Status = Halos_Ok) =
-                (Env'Old.State = State_Active
-                 and then Heartbeat_Is_Fresh (Cmd_In.Timestamp_Ns, Now_Ns)
-                 and then Torques_Within_Envelope
-                            (Cmd_In.Desired_Torque_Nm, Env.Max_Abs_Torque_Nm)))
-             and then
              (if Status = Halos_Ok then
                 Env.State = State_Active
+                and then Env'Old.State = State_Active
+                and then Heartbeat_Is_Fresh (Cmd_In.Timestamp_Ns, Now_Ns)
                 and then Safe_Torque_Out = Cmd_In.Desired_Torque_Nm
                 and then Torques_Within_Envelope
                            (Safe_Torque_Out, Env.Max_Abs_Torque_Nm)

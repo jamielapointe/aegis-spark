@@ -11,14 +11,11 @@ project Aegis_Spark is
    for Exec_Dir use "bin";
    for Main use ("aegis_spark.adb");
 
-   package Builder is
-      for Global_Configuration_Pragmas use "gnat.adc";
-   end Builder;
-
    package Compiler is
       for Default_Switches ("Ada") use
         Aegis_Spark_Config.Ada_Compiler_Switches &
-        ("-gnat2022",
+        ("-gnatec=" & Aegis_Spark'Project_Dir & "gnat.adc",
+         "-gnat2022",
          "-gnatW8",
          "-gnatwa",
          "-gnatwe",
@@ -28,7 +25,8 @@ project Aegis_Spark is
          "-gnaty3aAbBcefhiIklnOprStux",
          "-gnaty-d",
          "-gnatyM100",
-         "-fcallgraph-info=su,da");
+         "-fcallgraph-info=su,da",
+         "-fPIC");
    end Compiler;
 
    package Binder is

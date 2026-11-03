@@ -2,17 +2,41 @@ with "config/aegis_spark_config.gpr";
 
 project Aegis_Spark_Lib is
 
+   type Target_Mode_Type is ("host_sim", "qemu_virt", "igx_thor");
+   Aegis_Target_Mode : Target_Mode_Type := external ("AEGIS_TARGET_MODE", "host_sim");
+
    for Languages use ("Ada", "C");
-   for Source_Dirs use ("src/", "config/");
-   for Source_Files use
-     ("halos_safety_gate.ads",
-      "halos_safety_gate.adb",
-      "halos_logger.ads",
-      "halos_logger.adb",
-      "halos_c_logger.h",
-      "halos_c_logger.c",
-      "uart0_mmio.ads",
-      "uart0_mmio.adb");
+   for Source_Dirs use ("src/", "src/hal/" & Aegis_Target_Mode, "config/");
+
+   case Aegis_Target_Mode is
+      when "host_sim" =>
+         for Source_Files use
+           ("halos_safety_gate.ads",
+            "halos_safety_gate.adb",
+            "halos_logger.ads",
+            "halos_logger.adb",
+            "halos_c_logger.h",
+            "halos_c_logger.c",
+            "aegis.ads",
+            "aegis-hal.ads",
+            "aegis-hal-registers.ads",
+            "aegis-hal-registers.adb",
+            "uart0_mmio.ads",
+            "uart0_mmio.adb");
+      when "qemu_virt" | "igx_thor" =>
+         for Source_Files use
+           ("halos_safety_gate.ads",
+            "halos_safety_gate.adb",
+            "halos_logger.ads",
+            "halos_logger.adb",
+            "halos_c_logger.h",
+            "halos_c_logger.c",
+            "aegis.ads",
+            "aegis-hal.ads",
+            "aegis-hal-registers.ads",
+            "uart0_mmio.ads",
+            "uart0_mmio.adb");
+   end case;
 
    for Object_Dir use "obj/" & Aegis_Spark_Config.Build_Profile & "/lib";
    for Create_Missing_Dirs use "True";
@@ -21,17 +45,20 @@ project Aegis_Spark_Lib is
    for Library_Kind use "static";
    for Library_Dir use "lib";
    for Library_Ali_Dir use "lib";
-   for Library_Interface use ("Halos_Safety_Gate", "Halos_Logger", "Uart0_Mmio");
+   for Library_Interface use
+     ("Halos_Safety_Gate",
+      "Halos_Logger",
+      "Uart0_Mmio",
+      "Aegis",
+      "Aegis.HAL",
+      "Aegis.HAL.Registers");
    for Library_Auto_Init use "True";
-
-   package Builder is
-      for Global_Configuration_Pragmas use "gnat.adc";
-   end Builder;
 
    package Compiler is
       for Default_Switches ("Ada") use
         Aegis_Spark_Config.Ada_Compiler_Switches &
-        ("-gnat2022",
+        ("-gnatec=" & Aegis_Spark_Lib'Project_Dir & "gnat.adc",
+         "-gnat2022",
          "-gnatW8",
          "-gnatwa",
          "-gnatwe",
@@ -41,12 +68,14 @@ project Aegis_Spark_Lib is
          "-gnaty3aAbBcefhiIklnOprStux",
          "-gnaty-d",
          "-gnatyM100",
-         "-fcallgraph-info=su,da");
+         "-fcallgraph-info=su,da",
+         "-fPIC");
 
       for Default_Switches ("C") use
         ("-std=c23",
          "-O3",
          "-g",
+         "-fPIC",
          "-Wall",
          "-Wextra",
          "-Wpedantic",

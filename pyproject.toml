@@ -14,6 +14,8 @@ actionlint = ">=1.7.12"
 clang-23 = ">=23.1.4"
 clang-tools = ">=23.1.4"
 cmake = ">=4.4.5,<5"
+gtest = ">=1.18.0"
+hypothesis = ">=6.170.0"
 loguru = ">=0.7.3"
 mypy = ">=2.4.1"
 ninja = ">=1.13.2,<2"
@@ -51,13 +53,16 @@ format-check = "ruff format --check"
 lint = "ruff check"
 lint-fix = "ruff check --fix --exit-non-zero-on-fix"
 pre-commit = "pre-commit run --all-files"
-prove = "alr --non-interactive build --stop-after=generation && alr --non-interactive gnatprove --level=2 -j0"
-prove-ci = "alr --non-interactive build --stop-after=generation && alr --non-interactive gnatprove --level=4 --prover=cvc5,z3,altergo --warnings=error --report=all -j0"
+prove = "alr --non-interactive build --validation && alr --non-interactive gnatprove --level=2 -j0"
+prove-ci = "alr --non-interactive build --validation && alr --non-interactive gnatprove --level=4 --prover=cvc5,z3,altergo --warnings=error --report=all -j0"
 reorder-pyproject = "python scripts/ci/reorder_pyproject.py pyproject.toml"
 run = "./bin/aegis_spark"
 sort-pyproject-toml = "python scripts/ci/reorder_pyproject.py --check pyproject.toml"
 test-ada = "alr --non-interactive build --validation && ./bin/aegis_spark"
+test-aunit = "alr --non-interactive exec -- gprbuild -P tests/aunit/aegis_spark_tests.gpr -XAEGIS_TARGET_MODE=host_sim && ./bin/aunit_runner"
+test-gtest = "cmake --build --preset host-sim-debug --target aegis_spark_gtest && ctest --preset host-sim-debug -R gtest_suite --output-on-failure"
 test-python = "pytest tests/python -v"
+test-python-fuzz = "pytest tests/python/test_hypothesis_fuzz.py -v"
 typecheck = "mypy"
 verify-spark = "python scripts/ci/verify_spark_contracts.py"
 
@@ -73,6 +78,8 @@ depends-on = [
     "prove-ci",
     "sort-pyproject-toml",
     "test-ada",
+    "test-aunit",
+    "test-gtest",
     "test-python",
     "typecheck",
     "verify-spark",
@@ -82,6 +89,8 @@ depends-on = [
 depends-on = [
     "prove",
     "test-ada",
+    "test-aunit",
+    "test-gtest",
     "test-python",
     "verify-spark",
 ]

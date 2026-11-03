@@ -31,18 +31,36 @@ def test_spark_contracts_hygiene_passes() -> None:
 
 @pytest.mark.unit
 def test_uart0_mmio_proof_of_concept_sources() -> None:
-    """Verify that the SPARK Ada 2022 UART0 MMIO register proof-of-concept is present and well-formed."""
+    """Verify that the SPARK Ada 2022 UART0 MMIO register and Dual-Tier HAL are present and well-formed."""
     ads_path = REPO_ROOT / 'src' / 'uart0_mmio.ads'
     adb_path = REPO_ROOT / 'src' / 'uart0_mmio.adb'
     assert ads_path.is_file()
     assert adb_path.is_file()
 
     ads_content = ads_path.read_text(encoding='utf-8')
-    assert '16#4000_1000#' in ads_content
-    assert 'Async_Writers' in ads_content
-    assert 'Async_Readers' in ads_content
-    assert 'Effective_Writes' in ads_content
-    assert 'To_Address' in ads_content
+    assert 'Aegis.HAL.Registers' in ads_content
+    assert 'DR_Reg' in ads_content
+    assert 'SR_Reg' in ads_content
+    assert 'CR_Reg' in ads_content
+    assert 'BAUD_Reg' in ads_content
+
+    # Verify Dual-Tier HAL register backends
+    host_sim_ads = REPO_ROOT / 'src' / 'hal' / 'host_sim' / 'aegis-hal-registers.ads'
+    qemu_ads = REPO_ROOT / 'src' / 'hal' / 'qemu_virt' / 'aegis-hal-registers.ads'
+    thor_ads = REPO_ROOT / 'src' / 'hal' / 'igx_thor' / 'aegis-hal-registers.ads'
+    assert host_sim_ads.is_file()
+    assert qemu_ads.is_file()
+    assert thor_ads.is_file()
+
+    thor_content = thor_ads.read_text(encoding='utf-8')
+    assert '16#4000_1000#' in thor_content
+    assert 'Async_Writers' in thor_content
+    assert 'Async_Readers' in thor_content
+    assert 'Effective_Writes' in thor_content
+    assert 'To_Address' in thor_content
+
+    qemu_content = qemu_ads.read_text(encoding='utf-8')
+    assert '16#0900_0000#' in qemu_content
 
 
 @pytest.mark.unit
@@ -99,7 +117,10 @@ def test_standalone_static_library_packaging() -> None:
     lib_content = lib_gpr.read_text(encoding='utf-8')
     assert 'for Library_Name use "aegis_spark"' in lib_content
     assert 'for Library_Kind use "static"' in lib_content
-    assert 'for Library_Interface use ("Halos_Safety_Gate", "Halos_Logger", "Uart0_Mmio")' in lib_content
+    assert '"Halos_Safety_Gate"' in lib_content
+    assert '"Halos_Logger"' in lib_content
+    assert '"Uart0_Mmio"' in lib_content
+    assert '"Aegis.HAL.Registers"' in lib_content
     assert 'for Library_Auto_Init use "True"' in lib_content
 
     demo_content = demo_gpr.read_text(encoding='utf-8')
@@ -133,6 +154,11 @@ def test_aegis_spark_binary_execution() -> None:
 @pytest.mark.integration
 def test_cmake_workflow_preset_execution() -> None:
     """Verify that CMake workflow preset host-sim-debug configures, builds, and tests."""
+    import os
+
+    if os.environ.get('AEGIS_INSIDE_CTEST') == '1':
+        pytest.skip('Skipping nested cmake workflow invocation inside CTest runner')
+
     cmake_bin = run_clang_tidy.find_cmake()
     assert cmake_bin is not None, 'cmake executable must be available on PATH'
 
