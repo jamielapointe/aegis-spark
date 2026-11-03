@@ -10,7 +10,10 @@ extern "C" {
 #endif
 #endif
 
+#ifndef HALOS_DOF_COUNT_DEFINED
+#define HALOS_DOF_COUNT_DEFINED
 static constexpr size_t HALOS_DOF_COUNT = 6U;
+#endif
 
 enum halos_status : int32_t {
   HALOS_OK = 0,

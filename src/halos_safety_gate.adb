@@ -68,4 +68,79 @@ is
       Status := Halos_Ok;
    end Intercept_Joint_Cmd;
 
+   procedure Init_Composed_Gate
+     (Gate     : out Halos_Composed_Gate;
+      Start_Ns :     Unsigned_64)
+   is
+      Wd_Cfg : constant Halos_Watchdog.Halos_Watchdog_Config :=
+        (Min_Interval_Ns => Halos_Wd_Min_Interval_Ns,
+         Max_Interval_Ns => Halos_Wd_Max_Deadline_Ns);
+      Wd_Status : Halos_Watchdog.Halos_Watchdog_Status;
+   begin
+      Halos_Watchdog.Init (Gate.Watchdog);
+      Halos_Watchdog.Arm (Gate.Watchdog, Wd_Cfg, Start_Ns, Wd_Status);
+      if Wd_Status /= Halos_Watchdog.WD_Ok then
+         Gate.Watchdog.State := Halos_Watchdog.WD_Fault_Clock;
+      end if;
+      Halos_HSM.Init (Gate.HSM);
+      Halos_Kinematics.Init (Gate.Kinematics);
+   end Init_Composed_Gate;
+
+   procedure Intercept_Composed_Cmd
+     (Gate            : in out Halos_Composed_Gate;
+      Cmd_In          :        Halos_Kinematics.Halos_Kinematic_Cmd;
+      Now_Ns          :        Unsigned_64;
+      Safe_Torque_Out :    out Halos_Kinematics.Torque_Array;
+      Safe_Vel_Out    :    out Halos_Kinematics.Velocity_Array;
+      Status          :    out Halos_HSM.Halos_Hsm_Status)
+   is
+      Wd_Status  : Halos_Watchdog.Halos_Watchdog_Status;
+      Hsm_Status : Halos_HSM.Halos_Hsm_Status;
+   begin
+      Safe_Torque_Out := [others => 0.0];
+      Safe_Vel_Out    := [others => 0.0];
+
+      --  1. Evaluate windowed watchdog supervision
+      Halos_Watchdog.Pet (Gate.Watchdog, Now_Ns, Wd_Status);
+      if Wd_Status /= Halos_Watchdog.WD_Ok then
+         declare
+            Fault : Halos_HSM.Halos_Fault_Code;
+         begin
+            case Wd_Status is
+               when Halos_Watchdog.WD_Err_Too_Early =>
+                  Fault := Halos_HSM.Fault_Watchdog_Early_Pet;
+               when Halos_Watchdog.WD_Err_Too_Late =>
+                  Fault := Halos_HSM.Fault_Watchdog_Timeout;
+               when Halos_Watchdog.WD_Err_Time_Rewind =>
+                  Fault := Halos_HSM.Fault_Watchdog_Clock_Rewind;
+               when others =>
+                  Fault := Halos_HSM.Fault_Watchdog_Timeout;
+            end case;
+
+            Halos_HSM.Process_Event
+              (HSM        => Gate.HSM,
+               Event      => Halos_HSM.Event_Fault_Detected,
+               Fault_Code => Fault,
+               Status     => Hsm_Status);
+            Gate.Kinematics.HSM := Gate.HSM;
+            if Hsm_Status = Halos_HSM.HSM_Ok then
+               Status := Halos_HSM.HSM_Err_Invalid_Transition;
+            else
+               Status := Hsm_Status;
+            end if;
+            return;
+         end;
+      end if;
+
+      --  2. Evaluate 6-DOF kinematic envelope
+      Gate.Kinematics.HSM := Gate.HSM;
+      Halos_Kinematics.Intercept_Kinematic_Cmd
+        (State           => Gate.Kinematics,
+         Cmd_In          => Cmd_In,
+         Safe_Torque_Out => Safe_Torque_Out,
+         Safe_Vel_Out    => Safe_Vel_Out,
+         Status          => Status);
+      Gate.HSM := Gate.Kinematics.HSM;
+   end Intercept_Composed_Cmd;
+
 end Halos_Safety_Gate;

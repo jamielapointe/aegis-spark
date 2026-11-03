@@ -10,6 +10,7 @@ from scripts.ci import agent_ci_hygiene
 from scripts.ci import run_clang_format
 from scripts.ci import run_clang_tidy
 from scripts.ci import verify_spark_contracts
+from scripts.ci import verify_static_stack
 
 
 sub: Any = importlib.import_module('subprocess')
@@ -27,6 +28,12 @@ def test_repository_hygiene_passes() -> None:
 def test_spark_contracts_hygiene_passes() -> None:
     """Verify that all Ada sources enforce Ada 2022 and SPARK_Mode hygiene."""
     assert verify_spark_contracts.main(['--root', str(REPO_ROOT)]) == 0
+
+
+@pytest.mark.unit
+def test_static_stack_and_zero_dynamic_allocation() -> None:
+    """Verify that all SPARK subprograms have bounded stack usage and zero dynamic heap allocation."""
+    assert verify_static_stack.main(['--root', str(REPO_ROOT)]) == 0
 
 
 @pytest.mark.unit

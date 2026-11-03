@@ -67,6 +67,7 @@ test-python-fuzz = "pytest tests/python/test_hypothesis_fuzz.py -v"
 test-qemu = "python scripts/ci/run_qemu_smoke.py"
 typecheck = "mypy"
 verify-spark = "python scripts/ci/verify_spark_contracts.py"
+verify-stack = "python scripts/ci/verify_static_stack.py"
 
 [tool.pixi.tasks.ci]
 depends-on = [
@@ -86,6 +87,7 @@ depends-on = [
     "test-qemu",
     "typecheck",
     "verify-spark",
+    "verify-stack",
 ]
 
 [tool.pixi.tasks.test]
