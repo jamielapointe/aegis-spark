@@ -227,8 +227,8 @@ secrets.toml
 # -----------------------------------------------------------------------------
 # 8. Agent Orchestration & Teamwork Metadata
 # -----------------------------------------------------------------------------
-.agents/
-.agents/**
+.agents/teamwork/
+.agents/teamwork/**
 AGENT.md
 GEMINI.md
 

@@ -27,6 +27,7 @@ ruff = ">=0.17.3"
 zizmor = ">=1.31.1"
 
 [tool.pixi.pypi-dependencies]
+gersemi = ">=0.29.0"
 rumdl = ">=0.3.2"
 
 [tool.pixi.tasks]
@@ -37,6 +38,12 @@ clang-format = "python scripts/ci/run_clang_format.py"
 clang-format-check = "python scripts/ci/run_clang_format.py --check"
 clang-tidy = "python scripts/ci/run_clang_tidy.py"
 clean = "alr --non-interactive clean && alr --non-interactive gnatprove --clean"
+cmake-build = "cmake --build --preset host-sim-debug"
+cmake-configure = "cmake --preset host-sim-debug"
+cmake-format = "gersemi -i CMakeLists.txt cmake/*.cmake"
+cmake-format-check = "gersemi --check CMakeLists.txt cmake/*.cmake"
+cmake-test = "ctest --preset host-sim-debug"
+cmake-workflow = "cmake --workflow --preset host-sim-debug"
 format = "ruff format"
 format-check = "ruff format --check"
 lint = "ruff check"
@@ -57,6 +64,8 @@ depends-on = [
     "check-hygiene",
     "clang-format-check",
     "clang-tidy",
+    "cmake-format-check",
+    "cmake-workflow",
     "format-check",
     "lint",
     "prove-ci",

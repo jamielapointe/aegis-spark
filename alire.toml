@@ -16,7 +16,3 @@ executables = ["aegis_spark"]
 
 [[depends-on]]
 gnatprove = "^16.1.0"
-
-[[actions]]
-type = "post-build"
-command = ["python3", "scripts/ci/run_clang_tidy.py"]

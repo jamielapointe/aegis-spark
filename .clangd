@@ -2,6 +2,7 @@
 # aegis-spark .clangd — Synchronized with aegis_spark.gpr Default_Switches("C")
 # =============================================================================
 CompileFlags:
+  CompilationDatabase: build/host-sim-debug
   Add:
     - -xc
     - -std=c23
