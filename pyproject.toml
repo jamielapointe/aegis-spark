@@ -32,6 +32,7 @@ zizmor = ">=1.31.1"
 
 [tool.pixi.pypi-dependencies]
 gersemi = ">=0.29.0"
+google-antigravity = ">=0.1.23"
 rumdl = ">=0.3.2"
 
 [tool.pixi.tasks]
@@ -49,6 +50,7 @@ cmake-format = "gersemi -i CMakeLists.txt cmake/*.cmake"
 cmake-format-check = "gersemi --check CMakeLists.txt cmake/*.cmake"
 cmake-test = "ctest --preset host-sim-debug"
 cmake-workflow = "cmake --workflow --preset host-sim-debug"
+demo-agent = "python -m simulation.agent_planner_demo"
 format = "ruff format"
 format-check = "ruff format --check"
 lint = "ruff check"
@@ -62,6 +64,8 @@ sort-pyproject-toml = "python scripts/ci/reorder_pyproject.py --check pyproject.
 test-ada = "alr --non-interactive build --validation && ./bin/aegis_spark"
 test-aunit = "alr --non-interactive exec -- gprbuild -P tests/aunit/aegis_spark_tests.gpr -XAEGIS_TARGET_MODE=host_sim && ./bin/aunit_runner"
 test-gtest = "cmake --build --preset host-sim-debug --target aegis_spark_gtest && ctest --preset host-sim-debug -R gtest_suite --output-on-failure"
+test-gtest-asan = "cmake --build --preset host-sim-asan --target aegis_spark_gtest && ctest --preset host-sim-asan -R gtest_suite --output-on-failure"
+test-hypothesis = "pytest tests/python/test_hypothesis_fuzz.py -v"
 test-python = "pytest tests/python -v"
 test-python-fuzz = "pytest tests/python/test_hypothesis_fuzz.py -v"
 test-qemu = "python scripts/ci/run_qemu_smoke.py"
@@ -83,6 +87,7 @@ depends-on = [
     "test-ada",
     "test-aunit",
     "test-gtest",
+    "test-gtest-asan",
     "test-python",
     "test-qemu",
     "typecheck",
@@ -250,6 +255,7 @@ enable_error_code = [
 ]
 files = [
     "scripts",
+    "simulation",
     "tests/python",
 ]
 follow_imports = "normal"
@@ -279,6 +285,13 @@ module = [
 warn_return_any = false
 warn_unused_ignores = false
 
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = [
+    "google.antigravity",
+    "google.antigravity.*",
+]
+
 [tool.pytest.ini_options]
 addopts = [
     "--import-mode=importlib",
@@ -292,6 +305,7 @@ filterwarnings = [
 markers = [
     "benchmark: performance and latency benchmarks",
     "integration: multi-component SPARK + C23 + Python integration tests",
+    "timeout: test execution timeout in seconds",
     "unit: fast isolated unit tests",
 ]
 minversion = "9.1.0"

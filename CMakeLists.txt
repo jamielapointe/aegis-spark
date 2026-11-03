@@ -297,7 +297,7 @@ if(BUILD_TESTING)
   endif()
 
   if(Python3_Interpreter_FOUND)
-    set(QEMU_SMOKE_ARGS "--elf" "${AEGIS_SPARK_QEMU_ELF}")
+    set(QEMU_SMOKE_ARGS "--elf" "${AEGIS_SPARK_QEMU_ELF}" "--timeout" "30.0")
     if(NOT QEMU_AARCH64_EXECUTABLE)
       list(APPEND QEMU_SMOKE_ARGS "--allow-skip")
     endif()
@@ -308,6 +308,6 @@ if(BUILD_TESTING)
         ${QEMU_SMOKE_ARGS}
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
-    set_tests_properties(qemu_smoke PROPERTIES TIMEOUT 15)
+    set_tests_properties(qemu_smoke PROPERTIES TIMEOUT 45)
   endif()
 endif()

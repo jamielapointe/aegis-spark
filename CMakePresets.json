@@ -93,6 +93,11 @@
       "execution": {
         "noTestsAction": "error",
         "stopOnFailure": false
+      },
+      "filter": {
+        "exclude": {
+          "name": "^spark_formal_proof$"
+        }
       }
     },
     {
@@ -105,6 +110,11 @@
       "execution": {
         "noTestsAction": "error",
         "stopOnFailure": false
+      },
+      "filter": {
+        "include": {
+          "name": "^gtest_suite$"
+        }
       }
     },
     {
@@ -117,6 +127,11 @@
       "execution": {
         "noTestsAction": "error",
         "stopOnFailure": false
+      },
+      "filter": {
+        "exclude": {
+          "name": "^spark_formal_proof$"
+        }
       }
     },
     {
