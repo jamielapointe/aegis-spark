@@ -4,11 +4,13 @@
 Enforces:
 1. Deletion safety: Verifies no files/directories named '~', containing '~',
    or unexpanded shell variables ('$') exist.
-2. Git & build artifact hygiene: Verifies no agent metadata (.agents/teamwork),
-   temporary caches, generated Alire/GPRbuild directories (obj/, bin/, alire/, config/),
-   or forbidden rules files (AGENT.md, GEMINI.md) are tracked or leaked into src/.
+2. Git & build artifact hygiene: Verifies no agent scratch metadata (.agents/teamwork,
+   .gemini, .antigravity, .claude, .cursor, .windsurf), ALS markers (.als-alire),
+   generated Alire/GPRbuild directories (obj/, bin/, alire/, config/), or forbidden
+   root scratch/rules files (AGENT.md, GEMINI.md, CLAUDE.md, TEST_INFRA.md,
+   TEST_READY.md, ORIGINAL_REQUEST.md, PROJECT.md) are tracked or leaked into src/.
 3. Code layout: Verifies canonical repository layout (src/, tests/python/, scripts/ci/,
-   .antigravity/, .github/workflows/).
+   .agents/rules/, cmake/, .github/workflows/).
 4. Secret hygiene: Verifies zero leaked API keys or credentials exist in the repository.
 5. Case collision safety: Verifies no two paths under obj/ or bin/ differ solely by case
    (macOS APFS guard).
@@ -28,6 +30,23 @@ sub: Any = importlib.import_module('subprocess')
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 GOOGLE_API_KEY_PATTERN = re.compile(r'AIza[0-9A-Za-z\-_]{35}')
+
+FORBIDDEN_ROOT_FILES: tuple[str, ...] = (
+    'AGENT.md',
+    'GEMINI.md',
+    'CLAUDE.md',
+    'TEST_INFRA.md',
+    'TEST_READY.md',
+    'ORIGINAL_REQUEST.md',
+    'PROJECT.md',
+)
+
+FORBIDDEN_ROOT_DIRS: tuple[str, ...] = (
+    '.antigravity',
+    '.claude',
+    '.cursor',
+    '.windsurf',
+)
 
 
 def check_deletion_safety(root: Path, fail_on_tilde: bool = True) -> list[str]:
@@ -76,12 +95,16 @@ def check_agent_and_build_hygiene(root: Path) -> list[str]:
         List of violation messages found.
     """
     violations: list[str] = []
-    forbidden_root_files = ['AGENT.md', 'GEMINI.md']
 
-    for name in forbidden_root_files:
+    for name in FORBIDDEN_ROOT_FILES:
         p = root / name
         if p.exists():
-            violations.append(f"Reserved agent instruction file '{name}' must not exist at repository root: {p}")
+            violations.append(f"Forbidden agent/scratch file '{name}' must not exist at repository root: {p}")
+
+    for dir_name in FORBIDDEN_ROOT_DIRS:
+        d = root / dir_name
+        if d.exists():
+            violations.append(f"Forbidden legacy/agent directory '{dir_name}' must not exist at repository root: {d}")
 
     # Verify no stray compiler or binder artifacts leaked into src/
     src_dir = root / 'src'
@@ -103,6 +126,13 @@ def check_agent_and_build_hygiene(root: Path) -> list[str]:
                     git_bin,
                     'ls-files',
                     '.agents/teamwork',
+                    '.gemini',
+                    '.antigravity',
+                    '.claude',
+                    '.cursor',
+                    '.windsurf',
+                    '.als-alire',
+                    *FORBIDDEN_ROOT_FILES,
                     'obj',
                     'bin',
                     'lib',
@@ -141,6 +171,11 @@ def check_secret_hygiene(root: Path) -> list[str]:
     violations: list[str] = []
     excluded_dirs = {
         '.git',
+        '.gemini',
+        '.antigravity',
+        '.claude',
+        '.cursor',
+        '.windsurf',
         '.pixi',
         'obj',
         'bin',
@@ -205,7 +240,6 @@ def check_directory_layout(root: Path) -> list[str]:
         root / 'src',
         root / 'tests' / 'python',
         root / 'scripts' / 'ci',
-        root / '.antigravity',
         root / '.github' / 'workflows',
         root / 'cmake',
         root / '.agents' / 'rules',

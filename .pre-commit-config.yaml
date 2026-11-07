@@ -1,7 +1,7 @@
 # =============================================================================
 # aegis-spark .pre-commit-config.yaml
 # =============================================================================
-exclude: '^(\.agents/|\.benchmarks/|\.pixi/|\.rumdl_cache/|alire/|alire_install/|bin/|build/|config/|dist/|obj/|AGENT\.md|GEMINI\.md)'
+exclude: '^(\.agents/teamwork/|\.antigravity/|\.benchmarks/|\.claude/|\.cursor/|\.gemini/|\.pixi/|\.rumdl_cache/|\.windsurf/|alire/|alire_install/|bin/|build/|config/|dist/|obj/|AGENT\.md|CLAUDE\.md|GEMINI\.md|ORIGINAL_REQUEST\.md|PROJECT\.md|TEST_INFRA\.md|TEST_READY\.md)'
 
 repos:
   # ---------------------------------------------------------------------------

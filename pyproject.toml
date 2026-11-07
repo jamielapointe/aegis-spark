@@ -118,8 +118,10 @@ platforms = [
 
 [tool.ruff]
 exclude = [
-    ".agents",
+    ".agents/teamwork",
+    ".antigravity",
     ".benchmarks",
+    ".gemini",
     ".git",
     ".pixi",
     ".venv",
@@ -336,7 +338,7 @@ show_missing = true
 [tool.coverage.run]
 branch = true
 omit = [
-    "*/.agents/*",
+    "*/.agents/teamwork/*",
     "*/tests/*",
 ]
 source = [
@@ -345,8 +347,10 @@ source = [
 
 [tool.rumdl]
 exclude = [
-    ".agents",
+    ".agents/teamwork",
+    ".antigravity",
     ".benchmarks",
+    ".gemini",
     ".git",
     ".github",
     ".pixi",

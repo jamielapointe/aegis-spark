@@ -1,7 +1,7 @@
 # Rule: ISO C23 Systems & Zero-Copy ABI Standards
 
-**Applies to**: `src/*.c`, `src/*.h`, `kernel/include/**`, `hal/**`, `drivers/**`, `simulation/**`  
-**Skill Reference**: `/c-pro`
+- **Applies to**: `src/*.c`, `src/*.h`, `kernel/include/**`, `hal/**`, `drivers/**`, `simulation/**`
+- **Skill Reference**: `/c-pro`
 
 ---
 
@@ -24,7 +24,8 @@
 ## 2. Real-Time Determinism & Safety Invariants
 
 1. **Zero Dynamic Allocation**:
-   - `malloc`, `calloc`, `realloc`, and `free` are strictly forbidden on real-time, sensor, and safety paths (`cppcoreguidelines-no-malloc`).
+   - `malloc`, `calloc`, `realloc`, and `free` are strictly forbidden on real-time, sensor, and safety paths
+     (`cppcoreguidelines-no-malloc`).
    - Pre-allocate all memory statically during system initialization.
 2. **Bounded Stack & WCET**:
    - Recursion is strictly prohibited (`misc-no-recursion`).
@@ -41,12 +42,15 @@
 
 1. **Compile-Time Layout Verification**:
    - Every C struct shared with SPARK Ada must verify its size and field offsets:
+
      ```c
      static_assert(sizeof(struct halos_joint_cmd) == 32, "ABI layout mismatch with SPARK");
      static_assert(offsetof(struct halos_joint_cmd, timestamp_ns) == 0, "Offset mismatch");
      ```
+
 2. **Header Guards & C++ Interoperability**:
    - All headers must use `#pragma once` and include `extern "C"` guards:
+
      ```c
      #pragma once
      #ifdef __cplusplus
@@ -63,8 +67,10 @@
 ## 4. Code Formatting & Static Analysis
 
 1. **Formatting**: Google C++ Style via `.clang-format`:
+
    ```bash
    pixi run clang-format-check
    ```
+
 2. **Static Analysis**: Zero warnings under `.clang-tidy` (`WarningsAsErrors: "*"`):
    - Enforces CERT C, MISRA C, `misc-include-cleaner`, and `misc-no-recursion`.
