@@ -54,6 +54,7 @@ b~*.ali
 
 # Ada Language Server (ALS), GPRbuild, and GNAT Studio caches
 .als/
+.als-alire
 .gpr_cache/
 .gps/
 auto.cgpr
@@ -225,12 +226,29 @@ secrets.toml
 *PII*.json
 
 # -----------------------------------------------------------------------------
-# 8. Agent Orchestration & Teamwork Metadata
+# 8. Agent Orchestration, Scratch & Ephemeral Metadata
 # -----------------------------------------------------------------------------
+# Note: Permanent Antigravity 2.29.0 rules live in AGENTS.md and .agents/rules/
 .agents/teamwork/
 .agents/teamwork/**
+.gemini/
+.antigravity/
+.claude/
+.cursor/
+.cursorrules
+.windsurf/
+.copilot/
+.aider*
+/TEST_INFRA.md
+/TEST_READY.md
+/ORIGINAL_REQUEST.md
+/PROJECT.md
+/AGENT.md
+/GEMINI.md
+/CLAUDE.md
 AGENT.md
 GEMINI.md
+CLAUDE.md
 
 # -----------------------------------------------------------------------------
 # 9. Editor & Operating System Artifacts

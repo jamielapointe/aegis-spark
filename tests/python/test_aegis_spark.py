@@ -1,6 +1,7 @@
 """Integration and verification tests for the Aegis-SPARK safety kernel and CI gates."""
 
 import importlib
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,59 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 def test_repository_hygiene_passes() -> None:
     """Verify that repository layout, deletion safety, and secret hygiene pass."""
     assert agent_ci_hygiene.main(['--root', str(REPO_ROOT)]) == 0
+
+
+@pytest.mark.unit
+def test_gitignore_and_agentic_hygiene_enforcement(tmp_path: Path) -> None:
+    """Verify that .gitignore ignores agentic scratch paths and tracks canonical rules."""
+    git_bin = shutil.which('git') or '/usr/bin/git'
+    ignored_paths = [
+        '.agents/teamwork/state.json',
+        '.gemini/settings.json',
+        '.antigravity/rules.md',
+        '.als-alire',
+        'TEST_INFRA.md',
+        'TEST_READY.md',
+        'ORIGINAL_REQUEST.md',
+        'PROJECT.md',
+        'AGENT.md',
+        'GEMINI.md',
+        'CLAUDE.md',
+        '.claude/settings.json',
+        '.cursor/rules',
+        '.windsurf/rules',
+        '.aider.chat.history.md',
+    ]
+    for rel_path in ignored_paths:
+        res = sub.run(
+            [git_bin, 'check-ignore', '-q', rel_path],
+            cwd=REPO_ROOT,
+            check=False,
+        )
+        assert res.returncode == 0, f'Expected {rel_path} to be ignored by .gitignore'
+
+    tracked_paths = [
+        'AGENTS.md',
+        '.agents/rules/c23-abi.md',
+        '.agents/rules/cmake.md',
+        '.agents/rules/spark-safety.md',
+    ]
+    for rel_path in tracked_paths:
+        res = sub.run(
+            [git_bin, 'check-ignore', '-q', rel_path],
+            cwd=REPO_ROOT,
+            check=False,
+        )
+        assert res.returncode != 0, f'Expected {rel_path} NOT to be ignored by .gitignore'
+
+    # Verify check_agent_and_build_hygiene catches forbidden root scratch files and legacy dirs
+    (tmp_path / 'TEST_INFRA.md').write_text('# scratch\n', encoding='utf-8')
+    (tmp_path / 'PROJECT.md').write_text('# project\n', encoding='utf-8')
+    (tmp_path / '.antigravity').mkdir()
+    violations = agent_ci_hygiene.check_agent_and_build_hygiene(tmp_path)
+    assert any('TEST_INFRA.md' in v for v in violations)
+    assert any('PROJECT.md' in v for v in violations)
+    assert any('.antigravity' in v for v in violations)
 
 
 @pytest.mark.unit

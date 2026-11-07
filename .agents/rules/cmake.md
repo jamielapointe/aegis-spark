@@ -1,18 +1,21 @@
 # Rule: Modern CMake 4.4.3+ Build Orchestration Standards
 
-**Applies to**: `CMakeLists.txt`, `CMakePresets.json`, `cmake/*.cmake`  
-**Skill Reference**: `/cmake-pro`
+- **Applies to**: `CMakeLists.txt`, `CMakePresets.json`, `cmake/*.cmake`
+- **Skill Reference**: `/cmake-pro`
 
 ---
 
 ## 1. Core Principles & Version Requirements
 
 1. **Minimum Version**:
+
    ```cmake
    cmake_minimum_required(VERSION 4.4.3)
    ```
+
 2. **Target-Based CMake Only**:
-   - Global commands (`include_directories`, `link_libraries`, `add_definitions`, `add_compile_options`) are strictly forbidden.
+   - Global commands (`include_directories`, `link_libraries`, `add_definitions`, `add_compile_options`) are strictly
+     forbidden.
    - Always use target commands:
      - `target_include_directories(<target> <INTERFACE|PUBLIC|PRIVATE> ...)`
      - `target_link_libraries(<target> <INTERFACE|PUBLIC|PRIVATE> ...)`
@@ -31,6 +34,7 @@
      - `cmake/ProjectOptions.cmake`: Output dirs, position-independent code, IPO/LTO, compiler launchers.
      - `cmake/Sanitizers.cmake`: Dynamic ASan, UBSan, TSan configuration.
 2. **Register Module Path**:
+
    ```cmake
    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
    ```
@@ -41,9 +45,11 @@
 
 1. **Sole User Interface**:
    - Agents and CI must invoke CMake exclusively through presets:
+
      ```bash
      cmake --workflow --preset host-sim-debug
      ```
+
 2. **Standard Presets**:
    - `host-sim-debug`: Host SIL cyclic demo with ASan/UBSan.
    - `host-sim-asan`: Host SIL build with address and undefined behavior sanitizers.
@@ -59,11 +65,13 @@
 ## 4. Code Formatting & Quality
 
 1. **Gersemi Formatter**:
-   - CMake files must be formatted using `gersemi` (indent 4, line length 100).
+   - CMake files must be formatted using `gersemi` (indent 2, line length 100).
    - Verify formatting in CI:
+
      ```bash
      gersemi --check CMakeLists.txt cmake/*.cmake
      ```
+
 2. **Naming Conventions**:
    - Commands: lowercase (`add_library`, `target_link_libraries`).
    - Keywords / Variables: UPPERCASE (`INTERFACE`, `PUBLIC`, `CMAKE_BUILD_TYPE`).

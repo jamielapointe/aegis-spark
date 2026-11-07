@@ -61,6 +61,14 @@ all autonomous and human contributors to `aegis-spark`.
 - **Code Style**: CMake files must be formatted with `gersemi` (indent 2, line length 100).
 - See detailed rules: `.agents/rules/cmake.md`.
 
+### 2.4 Python 3.14.7 Tooling & Simulation (`/python-pro`)
+
+- **Environment & Orchestration**: Managed via `pixi` (`pyproject.toml`) across macOS (`osx-arm64`) and Linux
+  (`linux-64`, `linux-aarch64`).
+- **Modern Typing**: Use native PEP 649 deferred annotations (never `from __future__ import annotations`) and pass
+  `mypy --strict` without in-code suppressions (`# noqa`, `# ruff: ignore`, `# type: ignore`).
+- **Formatting & Style**: Follow Google Python Style Guide (`ruff` with single quotes and `convention = "google"`).
+
 ---
 
 ## 3. Collaboration & Lifecycle Protocol (`/github-flow-lifecycle`)
@@ -78,9 +86,14 @@ All modifications must follow the GitHub Flow lifecycle:
 
 ## 4. Workspace Hygiene & Security Guardrails
 
+- **Cross-Platform Portability**: Never commit `alire/` (including `alire/alire.lock`), `config/`, `obj/`, `bin/`, or
+  `.als-alire`. `alire/alire.lock` pins host-specific binary tarballs (`aarch64-darwin` vs. `x86_64-linux` vs.
+  `aarch64-linux`).
 - **Zero Hardcoded Paths**: Never commit machine-specific paths (`/Users/...`, `/Library/Developer/...`, `/home/...`).
 - **Deletion Safety**: Never create files or folders named `~` or containing `~` or `$`. Automated scripts must not run
   unconstrained `rm -rf`.
 - **Secret Hygiene**: Zero hardcoded credentials, tokens, or Google API keys (`AIza...`).
-- **Agent Workspaces**: `.agents/teamwork/` is reserved for ephemeral agent coordination metadata and is gitignored.
-  Permanent rules live in `AGENTS.md` and `.agents/rules/`.
+- **Agent Workspaces & Scratch Hygiene**: Ephemeral agent directories and scratch files (`.agents/teamwork/`,
+  `.gemini/`, `.antigravity/`, `/TEST_INFRA.md`, `/TEST_READY.md`, `/ORIGINAL_REQUEST.md`, `/PROJECT.md`, `/AGENT.md`,
+  `/GEMINI.md`, `/CLAUDE.md`) are gitignored and must never be tracked. Permanent Antigravity 2.29.0 customizations live
+  exclusively in `AGENTS.md` and `.agents/rules/`.
